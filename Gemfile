@@ -1,6 +1,6 @@
+source "https://rubygems.org"
 
-gem 'nio4r'
+git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
-group :development, :test do
-  gem 'rspec'
-end
+# Specify your gem's dependencies in lightio.gemspec
+gemspec
