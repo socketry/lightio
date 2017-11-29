@@ -5,23 +5,29 @@ module LightIO
   class IOloop
     def initialize
       @fiber = Fiber.new {run}
+      @backend = Backend::NIO.new
     end
 
     # should never invoke explicitly
     def run
       # start io loop and never return...
+      @backend.run
     end
 
     # wait a watcher, maybe a timer or socket
     def wait(watcher)
+      future = Future.new
       # add watcher to loop
+      watcher.set_callback {future.transfer}
+      watcher.register(@backend)
       # trigger a fiber switch
       # wait until watcher is ok
       # then do work
+      future.value
     end
 
-    def resume
-      @fiber.resume
+    def transfer
+      @fiber.transfer
     end
 
     class << self
