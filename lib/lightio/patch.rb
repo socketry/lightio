@@ -1,4 +1,4 @@
-require 'fiber'
+require 'beam'
 
 module LIO
   module Patch
