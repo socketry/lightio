@@ -1,5 +1,5 @@
 require 'lightio/version'
-require 'lightio/beam'
+require 'lightio/light_fiber'
 require 'lightio/future'
 require 'lightio/ioloop'
 require 'lightio/watcher'

@@ -1,4 +1,4 @@
-# Future, provide another way to operate Beam and Ioloop
+# Future, provide another way to operate LightFiber and Ioloop
 
 module LightIO
   class Future
@@ -21,13 +21,13 @@ module LightIO
       raise Error, "state error" if done?
       @value = value
       done!
-      @beam.transfer if @beam
+      @light_fiber.transfer if @light_fiber
     end
 
-    # block current beam/fiber and get value
+    # block current fiber and get value
     def value
       return @value if done?
-      @beam = Beam.current
+      @light_fiber = LightFiber.current
       @ioloop.transfer
       @value
     end
