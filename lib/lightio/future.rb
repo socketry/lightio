@@ -27,6 +27,7 @@ module LightIO
     # block current fiber and get value
     def value
       return @value if done?
+      raise Error, 'already used' if @light_fiber
       @light_fiber = LightFiber.current
       @ioloop.transfer
       @value

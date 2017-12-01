@@ -15,40 +15,62 @@ module LightIO
     def initialize(*args, &blk)
       raise Error, "must be called with a block" unless blk
       super() {
-        # TODO handle error
         begin
           @value = yield(*args)
         rescue StandardError => e
           @error = e
-          raise
         end
+        # transfer back to parent(caller fiber) after schedule
+        parent.transfer
       }
       # schedule beam in ioloop
       ioloop.add_callback {transfer}
     end
 
     def value
-      ioloop.transfer if alive?
-      raise @error if @error
+      if alive?
+        self.parent = Beam.current
+        ioloop.transfer
+      end
+      check_and_raise_error
       @value
     end
 
 
     def join(limit=0)
+      # try directly get result
       if !alive? || limit <= 0
         # call value to raise error
         value
         return self
       end
 
-      caller_beam = Beam.current
-      IOloop.current.add_timer(Timer.new(limit) {
-        @error = TimeoutError.new
-        caller_beam.transfer
-      })
-      # wait Ioloop
-      value rescue TimeoutError
-      alive? ? nil : self
+      self.parent = Beam.current
+      LightIO.sleep limit
+      if alive?
+        nil
+      else
+        check_and_raise_error
+        self
+      end
+    end
+
+    private
+
+    # Beam transfer back to parent after schedule
+    # parent is fiber or beam who called value/join methods
+    # if not present a parent, Beam will transfer to ioloop
+    def parent=(parent)
+      @parent = parent
+    end
+
+    # get parent/ioloop to transfer back
+    def parent
+      @parent || ioloop
+    end
+
+    def check_and_raise_error
+      raise @error if @error
     end
   end
 end

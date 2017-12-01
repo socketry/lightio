@@ -66,7 +66,7 @@ module LightIO
       end
 
       def run_callbacks
-        while (callback = @callbacks.pop)
+        while (callback = @callbacks.shift)
           callback.call
         end
       end
