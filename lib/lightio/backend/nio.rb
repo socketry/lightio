@@ -52,6 +52,7 @@ module LightIO
         @current_loop_time = nil
         @running = false
         @timers = Timers.new
+        @callbacks = []
       end
 
       def run
@@ -60,7 +61,18 @@ module LightIO
         loop do
           @current_loop_time = Time.now
           run_timers
+          run_callbacks
         end
+      end
+
+      def run_callbacks
+        while (callback = @callbacks.pop)
+          callback.call
+        end
+      end
+
+      def add_callback(&blk)
+        @callbacks << blk
       end
 
       def run_timers

@@ -4,6 +4,8 @@ require 'fiber'
 # make a little bit extend to fiber
 module LightIO
   class LightFiber < Fiber
+    attr_reader :ioloop
+
     def initialize(ioloop: IOloop.current, &blk)
       @ioloop = ioloop
       super(&blk)

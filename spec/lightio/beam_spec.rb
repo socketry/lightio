@@ -15,7 +15,7 @@ RSpec.describe LightIO::Beam do
     it "pass arguments" do
       expect(LightIO::Beam.new(1, 2) {|one, two| one + two}.value).to be 3
     end
-    
+
     it "raise error" do
       expect {LightIO::Beam.new {1 / 0}.value}.to raise_error ZeroDivisionError
     end
@@ -35,6 +35,15 @@ RSpec.describe LightIO::Beam do
       duration = 10
       expect(LightIO::Beam.new {LightIO.sleep(duration)}.join(0.1)).to be_nil
       expect(Time.now - t1).to be < duration
+    end
+  end
+
+  describe "concurrent" do
+    it "should concurrent schedule" do
+      t1 = Time.now
+      beams = 10.times.map {LightIO::Beam.new {LightIO.sleep 1}}
+      beams.each {|b| b.join}
+      expect(Time.now - t1).to be < 2
     end
   end
 end

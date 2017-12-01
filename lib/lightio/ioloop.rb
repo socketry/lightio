@@ -19,16 +19,23 @@ module LightIO
       @backend.add_timer(timer)
     end
 
+    def add_callback(&blk)
+      @backend.add_callback(&blk)
+    end
+
     # wait a watcher, maybe a timer or socket
     def wait(watcher)
       future = Future.new
       # add watcher to loop
-      watcher.set_callback {future.transfer}
+      id = Object.new
+      watcher.set_callback {future.transfer id}
       watcher.start(self)
       # trigger a fiber switch
       # wait until watcher is ok
       # then do work
-      future.value
+      if (result = future.value) != id
+        raise InvalidTransferError, "expect #{id}, but get #{result}"
+      end
     end
 
     def transfer

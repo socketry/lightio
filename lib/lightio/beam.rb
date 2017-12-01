@@ -23,10 +23,12 @@ module LightIO
           raise
         end
       }
+      # schedule beam in ioloop
+      ioloop.add_callback {transfer}
     end
 
     def value
-      transfer if alive?
+      ioloop.transfer if alive?
       raise @error if @error
       @value
     end
@@ -34,15 +36,15 @@ module LightIO
 
     def join(limit=0)
       if !alive? || limit <= 0
+        # call value to raise error
         value
         return self
       end
 
-      LightIO.sleep limit
-      check_back = Beam.current
+      caller_beam = Beam.current
       IOloop.current.add_timer(Timer.new(limit) {
         @error = TimeoutError.new
-        check_back.transfer
+        caller_beam.transfer
       })
       # wait Ioloop
       value rescue TimeoutError

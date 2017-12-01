@@ -4,4 +4,7 @@ module LightIO
 
   class TimeoutError < Error
   end
+
+  class InvalidTransferError < Error
+  end
 end
