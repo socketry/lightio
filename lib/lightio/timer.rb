@@ -8,8 +8,8 @@ module LightIO
       @callback = blk
     end
 
-    def register(backend)
-      backend.add_timer(self)
+    def start(ioloop)
+      ioloop.add_timer(self)
     end
   end
 end
