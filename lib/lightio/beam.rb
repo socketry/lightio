@@ -52,8 +52,13 @@ module LightIO
         return self
       end
 
-      self.parent = Beam.current
-      LightIO.sleep limit
+      # set a transfer back timer
+      parent = Beam.current
+      timer = Watchers::Timer.new(limit)
+      timer.set_callback {parent.transfer}
+      ioloop.add_timer(timer)
+      ioloop.transfer
+
       if alive?
         nil
       else

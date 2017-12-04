@@ -17,5 +17,11 @@ RSpec.describe Lightio do
       LightIO.sleep 0
       expect(Time.now - t1).to be < duration
     end
+
+    it "sleep forever" do
+      expect {LightIO.timeout(0.1) do
+        LightIO.sleep
+      end}.to raise_error LightIO::TimeoutError
+    end
   end
 end
