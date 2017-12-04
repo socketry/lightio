@@ -6,7 +6,7 @@ RSpec.describe Lightio do
   describe "#sleep" do
     it "sleep work" do
       t1 = Time.now
-      duration = 0.1
+      duration = 0.01
       LightIO.sleep duration
       expect(Time.now - t1).to be > duration
     end
@@ -19,7 +19,7 @@ RSpec.describe Lightio do
     end
 
     it "sleep forever" do
-      expect {LightIO.timeout(0.1) do
+      expect {LightIO.timeout(0.01) do
         LightIO.sleep
       end}.to raise_error LightIO::TimeoutError
     end

@@ -33,7 +33,7 @@ RSpec.describe LightIO::Beam do
     it "with a limit time" do
       t1 = Time.now
       duration = 10
-      expect(LightIO::Beam.new {LightIO.sleep(duration)}.join(0.1)).to be_nil
+      expect(LightIO::Beam.new {LightIO.sleep(duration)}.join(0.01)).to be_nil
       expect(Time.now - t1).to be < duration
     end
   end
@@ -91,9 +91,9 @@ RSpec.describe LightIO::Beam do
   describe "concurrent" do
     it "should concurrent schedule" do
       t1 = Time.now
-      beams = 20.times.map {LightIO::Beam.new {LightIO.sleep 0.1}}
+      beams = 20.times.map {LightIO::Beam.new {LightIO.sleep 0.01}}
       beams.each {|b| b.join}
-      expect(Time.now - t1).to be < 2
+      expect(Time.now - t1).to be < 0.2
     end
   end
 end

@@ -7,6 +7,7 @@ require 'lightio/watchers'
 require 'lightio/backend/nio'
 require 'lightio/beam'
 require 'lightio/timeout'
+require 'lightio/queue'
 
 module LightIO
   class << self

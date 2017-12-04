@@ -11,7 +11,7 @@ RSpec.describe LightIO::Timeout do
 
     it "timeout" do
       expect do
-        LightIO::Timeout.timeout(0.1) do
+        LightIO::Timeout.timeout(0.01) do
           LightIO.sleep 5
         end
       end.to raise_error LightIO::TimeoutError
