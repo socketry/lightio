@@ -21,7 +21,7 @@ module LightIO
           @error = e
         end
         # mark as dead
-        @alive = false
+        dead
         # transfer back to parent(caller fiber) after schedule
         parent.transfer
       }
@@ -62,6 +62,12 @@ module LightIO
       end
     end
 
+    def kill
+      dead
+      parent.transfer if self == Beam.current
+      self
+    end
+
     class << self
       def pass
         schedule = Watchers::Schedule.new
@@ -70,6 +76,11 @@ module LightIO
     end
 
     private
+
+    # mark beam as dead
+    def dead
+      @alive = false
+    end
 
     # Beam transfer back to parent after schedule
     # parent is fiber or beam who called value/join methods

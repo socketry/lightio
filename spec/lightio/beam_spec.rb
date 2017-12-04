@@ -68,6 +68,26 @@ RSpec.describe LightIO::Beam do
     end
   end
 
+  describe "#kill" do
+    it 'works' do
+      beam = LightIO::Beam.new{1 + 2}
+      expect(beam.alive?).to be_truthy
+      expect(beam.kill).to be beam
+      expect(beam.alive?).to be_falsey
+      expect(beam.value).to be_nil
+    end
+
+    it 'kill self' do
+      result = []
+      beam = LightIO::Beam.new{result << 1;LightIO::Beam.current.kill;result << 2}
+      expect(beam.alive?).to be_truthy
+      beam.join
+      expect(beam.alive?).to be_falsey
+      expect(beam.value).to be_nil
+      expect(result).to be == [1]
+    end
+  end
+
   describe "concurrent" do
     it "should concurrent schedule" do
       t1 = Time.now
