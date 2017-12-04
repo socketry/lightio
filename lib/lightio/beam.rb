@@ -55,6 +55,11 @@ module LightIO
       end
     end
 
+    class << self
+      def pass
+      end
+    end
+
     private
 
     # Beam transfer back to parent after schedule
