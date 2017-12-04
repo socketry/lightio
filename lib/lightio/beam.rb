@@ -20,11 +20,18 @@ module LightIO
         rescue StandardError => e
           @error = e
         end
+        # mark as dead
+        @alive = false
         # transfer back to parent(caller fiber) after schedule
         parent.transfer
       }
       # schedule beam in ioloop
       ioloop.add_callback {transfer}
+      @alive = true
+    end
+
+    def alive?
+      super && @alive
     end
 
     def value

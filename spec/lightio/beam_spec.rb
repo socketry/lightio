@@ -52,6 +52,22 @@ RSpec.describe LightIO::Beam do
     end
   end
 
+  describe "#alive?" do
+    it "works" do
+      beam = LightIO::Beam.new {1 + 2}
+      expect(beam.alive?).to be_truthy
+      beam.value
+      expect(beam.alive?).to be_falsey
+    end
+
+    it "dead if error raised" do
+      beam = LightIO::Beam.new {1 / 0}
+      expect(beam.alive?).to be_truthy
+      expect {beam.value}.to raise_error ZeroDivisionError
+      expect(beam.alive?).to be_falsey
+    end
+  end
+
   describe "concurrent" do
     it "should concurrent schedule" do
       t1 = Time.now
