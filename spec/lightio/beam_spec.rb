@@ -38,10 +38,24 @@ RSpec.describe LightIO::Beam do
     end
   end
 
+  describe "#pass" do
+    it 'works' do
+      result = []
+      b1 = LightIO::Beam.new {result << 1; LightIO::Beam.pass; result << 3}
+      b2 = LightIO::Beam.new {result << 2; LightIO::Beam.pass; result << 4}
+      b1.join; b2.join
+      expect(result).to eq([1, 2, 3, 4])
+    end
+
+    it "call from non beam" do
+      expect(LightIO::Beam.pass).to be_nil
+    end
+  end
+
   describe "concurrent" do
     it "should concurrent schedule" do
       t1 = Time.now
-      beams = 10.times.map {LightIO::Beam.new {LightIO.sleep 1}}
+      beams = 20.times.map {LightIO::Beam.new {LightIO.sleep 0.1}}
       beams.each {|b| b.join}
       expect(Time.now - t1).to be < 2
     end

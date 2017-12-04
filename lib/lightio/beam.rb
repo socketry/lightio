@@ -57,6 +57,8 @@ module LightIO
 
     class << self
       def pass
+        schedule = Watchers::Schedule.new
+        IOloop.current.wait(schedule)
       end
     end
 

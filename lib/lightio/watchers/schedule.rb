@@ -1,6 +1,6 @@
 module LightIO
   module Watchers
-    class Callback < Watcher
+    class Schedule < Watcher
       def start(ioloop)
         ioloop.add_callback(&@callback)
       end

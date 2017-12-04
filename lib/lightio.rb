@@ -11,8 +11,12 @@ module LightIO
   class << self
     # TODO handle sleep forever
     def sleep(duration)
-      timer = LightIO::Watchers::Timer.new duration
-      LightIO::IOloop.current.wait(timer)
+      if duration.zero? && Beam.current.respond_to?(:pass)
+        Beam.current.pass
+        return
+      end
+      timer = Watchers::Timer.new duration
+      IOloop.current.wait(timer)
     end
   end
 end
