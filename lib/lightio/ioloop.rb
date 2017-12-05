@@ -1,6 +1,5 @@
 # IOloop like a per-threaded Eventmachine (cause fiber cannot resume cross threads)
-# join, 等待 IOloop 结束
-# 在 loop 中为 waiter (future-like proxy object) 对象返回结果
+
 module LightIO
   class IOloop
 
@@ -21,6 +20,14 @@ module LightIO
 
     def add_callback(&blk)
       @backend.add_callback(&blk)
+    end
+
+    def add_io_wait(io, interests, &blk)
+      @backend.add_io_wait(io, interests, &blk)
+    end
+
+    def cancel_io_wait(io)
+      @backend.cancel_io_wait(io)
     end
 
     # wait a watcher, maybe a timer or socket

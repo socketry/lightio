@@ -1,4 +1,5 @@
 # use nio4r implement event loop, inspired from eventmachine/pure_ruby implement
+require 'nio'
 require 'set'
 module LightIO
   module Backend
@@ -53,6 +54,7 @@ module LightIO
         @running = false
         @timers = Timers.new
         @callbacks = []
+        @selector = ::NIO::Selector.new
       end
 
       def run
@@ -62,21 +64,13 @@ module LightIO
           @current_loop_time = Time.now
           run_timers
           run_callbacks
+          handle_selectables
         end
       end
 
-      def run_callbacks
-        while (callback = @callbacks.shift)
-          callback.call
-        end
-      end
 
       def add_callback(&blk)
         @callbacks << blk
-      end
-
-      def run_timers
-        @timers.fire(@current_loop_time)
       end
 
       def add_timer(timer)
@@ -87,10 +81,41 @@ module LightIO
         @timers.cancel_timer(timer)
       end
 
+      def add_io_wait(io, interests, &blk)
+        monitor = @selector.register(io, interests)
+        monitor.value = blk
+      end
+
+      def cancel_io_wait(io)
+        @selector.deregister(io)
+      end
+
       def stop
         return unless @running
         @running = false
         raise
+      end
+
+      private
+
+      def run_timers
+        @timers.fire(@current_loop_time)
+      end
+
+      def handle_selectables
+        @selector.select(0) do |monitor|
+          # invoke callback if io is ready
+          if monitor.readiness
+            monitor.close
+            monitor.value.call(monitor.io)
+          end
+        end
+      end
+
+      def run_callbacks
+        while (callback = @callbacks.shift)
+          callback.call
+        end
       end
     end
   end

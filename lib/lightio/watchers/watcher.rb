@@ -8,7 +8,7 @@ module LightIO
         @callback = blk
       end
 
-      def register(backend)
+      def start(backend)
         raise
       end
     end
