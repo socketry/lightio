@@ -1,6 +1,8 @@
-# IOloop like a per-threaded Eventmachine (cause fiber cannot resume cross threads)
 require 'lightio/core/backend/nio'
 module LightIO::Core
+  # IOloop like a per-threaded EventMachine (cause fiber cannot resume cross threads)
+  #
+  # IOloop handle io waiting and schedule beams, user do not supposed to directly use this class
   class IOloop
 
     def initialize
@@ -30,7 +32,8 @@ module LightIO::Core
       @backend.cancel_io_wait(io)
     end
 
-    # wait a watcher, maybe a timer or socket
+    # Wait a watcher, watcher can be a timer or socket.
+    # see LightIO::Watchers module for detail
     def wait(watcher)
       future = Future.new
       # add watcher to loop

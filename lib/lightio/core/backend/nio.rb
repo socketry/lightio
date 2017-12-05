@@ -47,6 +47,7 @@ module LightIO::Core
       end
     end
 
+    # LightIO use NIO as default event-driving backend
     class NIO
       def initialize
         # @selector = NIO::Selector.new

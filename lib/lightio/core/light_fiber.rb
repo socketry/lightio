@@ -1,8 +1,9 @@
 require 'fiber'
 
-# LightFiber is internal represent SHOULD NOT BE USED DIRECTLY
-# make a little bit extend to fiber
 module LightIO::Core
+  # LightFiber is internal represent, we make slight extend on ruby Fiber to bind fibers to IOLoop
+  #
+  # SHOULD NOT BE USED DIRECTLY
   class LightFiber < Fiber
     attr_reader :ioloop
 

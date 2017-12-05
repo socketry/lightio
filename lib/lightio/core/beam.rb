@@ -1,17 +1,31 @@
-# A light-weight executor unit
-# Example:
-# - initialize with block, beam will start execute it just like Thread
-# Beam.new{puts "hello"}
-# output: hello
-# Beam.new(1,2,3){|one, two, three| puts [one, two, three].join(",") }
-# output: 1,2,3
-# - use join wait beam done
-# b = Beam.new(){LightIO.sleep 3}
-# b.join
-# b.alive?
-# output: false
 module LightIO::Core
+  # Beam is light-weight executor, provide thread-like interface
+  #
+  # @Example:
+  #   #- initialize with block
+  #   b = Beam.new{puts "hello"}
+  #   b.join
+  #   #output: hello
+  #
+  #   b = Beam.new(1,2,3){|one, two, three| puts [one, two, three].join(",") }
+  #   b.join
+  #   #output: 1,2,3
+  #
+  #   #- use join wait beam done
+  #   b = Beam.new(){LightIO.sleep 3}
+  #   b.join
+  #   b.alive? # false
   class Beam < LightFiber
+
+    # Create a new beam
+    #
+    # Beam is light-weight executor, provide thread-like interface
+    #
+    # Beam.new("hello"){|hello| puts hello }
+    #
+    # @param [Array]  args pass arguments to Beam block
+    # @param [Proc]  blk block to execute
+    # @return [Beam]
     def initialize(*args, &blk)
       raise Error, "must be called with a block" unless blk
       super() {
@@ -34,6 +48,7 @@ module LightIO::Core
       super && @alive
     end
 
+    # block and wait beam return a value
     def value
       if alive?
         self.parent = Beam.current
@@ -43,7 +58,10 @@ module LightIO::Core
       @value
     end
 
-
+    # Block and wait beam dead
+    #
+    # @param [Numeric]  limit wait limit seconds if limit > 0, return nil if beam still alive, else return beam self
+    # @return [Beam, nil]
     def join(limit=0)
       # try directly get result
       if !alive? || limit <= 0
@@ -67,6 +85,9 @@ module LightIO::Core
       end
     end
 
+    # Kill beam
+    #
+    # @return [Beam]
     def kill
       dead
       parent.transfer if self == Beam.current
@@ -74,6 +95,12 @@ module LightIO::Core
     end
 
     class << self
+
+      # Schedule beams
+      #
+      # normally beam should be auto scheduled, use this method to manually trigger a schedule
+      #
+      # @return [nil]
       def pass
         schedule = LightIO::Watchers::Schedule.new
         IOloop.current.wait(schedule)
