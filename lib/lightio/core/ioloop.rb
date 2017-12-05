@@ -1,6 +1,6 @@
 # IOloop like a per-threaded Eventmachine (cause fiber cannot resume cross threads)
-
-module LightIO
+require 'lightio/core/backend/nio'
+module LightIO::Core
   class IOloop
 
     def initialize

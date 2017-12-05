@@ -1,6 +1,6 @@
-RSpec.describe Lightio do
+RSpec.describe LightIO do
   it "has a version number" do
-    expect(Lightio::VERSION).not_to be nil
+    expect(LightIO::VERSION).not_to be nil
   end
 
   describe "#sleep" do
@@ -21,7 +21,7 @@ RSpec.describe Lightio do
     it "sleep forever" do
       expect {LightIO.timeout(0.01) do
         LightIO.sleep
-      end}.to raise_error LightIO::TimeoutError
+      end}.to raise_error LightIO::Timeout::Error
     end
   end
 end

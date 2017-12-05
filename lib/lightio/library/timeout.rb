@@ -1,13 +1,12 @@
 require 'timeout'
-module LightIO
+module LightIO::Library
   module Timeout
-    Error = TimeoutError
-
     extend self
+    Error = ::Timeout::Error
 
     def timeout(sec, klass=Error, &blk)
       return yield(sec) if sec.nil? or sec.zero?
-      beam = Beam.new(sec, &blk)
+      beam = LightIO::Beam.new(sec, &blk)
       message = "execution expired"
       if beam.join(sec).nil?
         raise klass, message

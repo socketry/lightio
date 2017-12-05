@@ -5,7 +5,7 @@ require "lightio/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "lightio"
-  spec.version       = Lightio::VERSION
+  spec.version       = LightIO::VERSION
   spec.authors       = ["jjy"]
   spec.email         = ["jjyruby@gmail.com"]
 

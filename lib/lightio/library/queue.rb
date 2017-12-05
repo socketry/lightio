@@ -1,4 +1,4 @@
-module LightIO
+module LightIO::Library
   class Queue
     def initialize
       @queue = []
@@ -28,8 +28,8 @@ module LightIO
     def push(object)
       raise ClosedQueueError, "queue closed" if @close
       if @waiters.any?
-        future = Future.new
-        IOloop.current.add_callback {
+        future = LightIO::Future.new
+        LightIO::IOloop.current.add_callback {
           @waiters.shift.transfer(object)
           future.transfer
         }
@@ -59,7 +59,7 @@ module LightIO
         if non_block
           raise ThreadError, 'queue empty'
         else
-          future = Future.new
+          future = LightIO::Future.new
           @waiters << future
           future.value
         end

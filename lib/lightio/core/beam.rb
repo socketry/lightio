@@ -10,7 +10,7 @@
 # b.join
 # b.alive?
 # output: false
-module LightIO
+module LightIO::Core
   class Beam < LightFiber
     def initialize(*args, &blk)
       raise Error, "must be called with a block" unless blk
@@ -54,7 +54,7 @@ module LightIO
 
       # set a transfer back timer
       parent = Beam.current
-      timer = Watchers::Timer.new(limit)
+      timer = LightIO::Watchers::Timer.new(limit)
       timer.set_callback {parent.transfer}
       ioloop.add_timer(timer)
       ioloop.transfer
@@ -75,7 +75,7 @@ module LightIO
 
     class << self
       def pass
-        schedule = Watchers::Schedule.new
+        schedule = LightIO::Watchers::Schedule.new
         IOloop.current.wait(schedule)
       end
     end

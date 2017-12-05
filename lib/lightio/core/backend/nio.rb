@@ -1,7 +1,7 @@
 # use nio4r implement event loop, inspired from eventmachine/pure_ruby implement
 require 'nio'
 require 'set'
-module LightIO
+module LightIO::Core
   module Backend
 
     class Error < RuntimeError

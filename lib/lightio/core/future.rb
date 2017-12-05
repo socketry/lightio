@@ -1,6 +1,6 @@
 # Future, provide another way to operate LightFiber and Ioloop
 
-module LightIO
+module LightIO::Core
   class Future
     def initialize
       @value = nil
