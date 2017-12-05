@@ -26,4 +26,17 @@ RSpec.describe LightIO::IOPrimitive do
       expect(r.read).to be == "Hello from Beam"
     end
   end
+
+  describe "wait timeout" do
+    it "beam wait timeout" do
+      r, _w = IO.pipe
+      b = LightIO::Beam.new {LightIO.wait_read(r, 0.001)}
+      expect(b.value).to be_nil
+    end
+
+    it "root wait timeout" do
+      r, _w = IO.pipe
+      expect(LightIO.wait_read(r, 0.001)).to be_nil
+    end
+  end
 end
