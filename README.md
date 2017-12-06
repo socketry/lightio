@@ -1,8 +1,14 @@
-# Lightio
+# LightIO
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/lightio`. To experiment with that code, run `bin/console` for an interactive prompt.
+LightIO is a ruby networking library, that combines ruby fiber and IO event loop to provide both simple synchrony library interface and high performance networking IO.
 
-TODO: Delete this and the text above, and describe your gem
+
+LightIO is heavily inspired by [gevent](http://www.gevent.org/).
+
+## Notice
+
+This library is still **WIP**, *watch* or *star* this repo for further information.
+Its not recommendation to use LightIO in production now, but you can always give a try. open a issue if you have any question.
 
 ## Installation
 
@@ -22,7 +28,25 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+``` ruby
+require 'lightio'
+
+start = Time.now
+
+beams = 1000.times.map do
+  # LightIO::Beam is a thread-like executor, use it instead Thread
+  LightIO::Beam.new do
+    # do some io operations in beam
+    LightIO.sleep(1)
+  end
+end
+
+beams.each(&:join)
+seconds = Time.now - start
+puts "1000 beams take #{seconds - 1} seconds to create"
+```
+
+View more [examples](/examples).
 
 ## Development
 
