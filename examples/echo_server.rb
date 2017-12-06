@@ -19,7 +19,7 @@ class EchoServer
 
       # LightIO::Beam is lightweight executor, provide thread-like interface
       # just start new beam for per socket
-      LightIO::Beam.new(socket) do
+      LightIO::Beam.new(socket) do |socket|
         while LightIO.wait_read(socket)
           echo(socket)
         end
