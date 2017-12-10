@@ -68,6 +68,10 @@ See [wiki](https://github.com/jjyr/lightio/wiki) for more information
 
 [API Documentation](http://www.rubydoc.info/gems/lightio/frames)
 
+## Discussion
+
+[Discussion on Gitter](https://gitter.im/lightio-dev/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
