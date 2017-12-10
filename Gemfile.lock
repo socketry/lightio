@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     lightio (0.1.0.pre)
-      nio4r
+      nio4r (~> 2.1)
 
 GEM
   remote: https://rubygems.org/
