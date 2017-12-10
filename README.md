@@ -17,7 +17,7 @@ Its not recommendation to use LightIO in production now, but you can always give
 
 Before we release a full networking framework at the version 1.0.0, there are three targets(milestones).
 
-1. Provide a bare-bone framework, include fiber based lightweight executor and a way to collebrate with ruby socket library
+1. Provide a bare-bone framework, include fiber based lightweight executor and a way to collaborate with ruby socket library
 2. Provide lightio networking libraries, that have the same API with ruby stdlib
 3. Implement ruby stdlib monkey patch, user can apply monkey patch and just write normal ruby code to get the power of lightio
 
