@@ -85,6 +85,7 @@ module LightIO::Core
       def add_io_wait(io, interests, &blk)
         monitor = @selector.register(io, interests)
         monitor.value = blk
+        monitor
       end
 
       def cancel_io_wait(io)
@@ -107,7 +108,6 @@ module LightIO::Core
         @selector.select(0) do |monitor|
           # invoke callback if io is ready
           if monitor.readiness
-            monitor.close
             monitor.value.call(monitor.io)
           end
         end
