@@ -22,6 +22,13 @@ module LightIO::Watchers
       @wait_for = nil
       # NIO monitor
       @monitor = @ioloop.add_io_wait(@io, interests) {callback_on_waiting}
+      ObjectSpace.define_finalizer(self, self.class.finalizer(@monitor))
+    end
+
+    class << self
+      def finalizer(monitor)
+        proc {monitor.close if monitor && !monitor.close?}
+      end
     end
 
     def interests
