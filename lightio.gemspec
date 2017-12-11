@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["jjy"]
   spec.email         = ["jjyruby@gmail.com"]
 
-  spec.summary       = %q{LightIO is a high performance ruby networking library}
-  spec.description   = %q{LightIO combines ruby fiber and IO event loop to provide both simple synchrony library interface  and high performance networking IO}
+  spec.summary       = %q{LightIO is a ruby networking library, that combines ruby fiber and fast IO event loop.}
+  spec.description   = %q{The intent of LightIO is to provide ruby stdlib compatible modules, that user can use these modules instead stdlib, to gain the benefits of IO event loop without care any details about react or async programming.}
   spec.homepage      = "https://github.com/jjyr/lightio"
   spec.license       = "MIT"
 
