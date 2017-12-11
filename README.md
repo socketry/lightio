@@ -5,23 +5,13 @@
 [![Build Status](https://travis-ci.org/jjyr/lightio.svg?branch=master)](https://travis-ci.org/jjyr/lightio)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jjyr/lightio/blob/master/LICENSE.txt)
 
-LightIO is a ruby networking library, that combines ruby fiber and IO event loop to provide both simple synchrony library interface and high performance networking IO.
+LightIO is a ruby networking library, that combines ruby fiber and fast IO event loop.
 
+The intent of LightIO is to provide ruby stdlib compatible modules, that user can use these modules instead stdlib, to gain the benefits of IO event loop without care any details about react or async programming.
 
-LightIO is heavily inspired by [gevent](http://www.gevent.org/).
+See [Wiki](https://github.com/jjyr/lightio/wiki) and [Roadmap](https://github.com/jjyr/lightio/wiki/Current-status-and-roadmap) to get more information.
 
-## Current Status
-
-This library is still **WIP**, *watch* or *star* this repo for further information.
-Its not recommendation to use LightIO in production now, but you can always give a try. open a issue if you have any question.
-
-Before we release a full networking framework at the version 1.0.0, there are three targets(milestones).
-
-1. Provide a bare-bone framework, include fiber based lightweight executor and a way to collaborate with ruby socket library
-2. Provide lightio networking libraries, that have the same API with ruby stdlib
-3. Implement ruby stdlib monkey patch, user can apply monkey patch and just write normal ruby code to get the power of lightio
-
-Thanks to [nio4r](https://github.com/socketry/nio4r), the first target is already achieved.
+LightIO is build upon [nio4r](https://github.com/socketry/nio4r). Get heavily inspired by [gevent](http://www.gevent.org/), [async-io](https://github.com/socketry/async-io).
 
 
 ## Installation
