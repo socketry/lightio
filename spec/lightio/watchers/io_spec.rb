@@ -5,10 +5,10 @@ RSpec.describe LightIO::Watchers::IO do
     it 'can not wait for non interests' do
       r, w = IO.pipe
       io_r = LightIO::Watchers::IO.new(r, :r)
-      expect {io_r.wait_write}.to raise_error(ArgumentError)
+      expect {io_r.wait_writable}.to raise_error(ArgumentError)
       io_r.close
       io_w = LightIO::Watchers::IO.new(w, :w)
-      expect {io_w.wait_read}.to raise_error(ArgumentError)
+      expect {io_w.wait_readable}.to raise_error(ArgumentError)
       io_w.close
     end
 
@@ -16,7 +16,7 @@ RSpec.describe LightIO::Watchers::IO do
       r, w = IO.pipe
       io_watcher = LightIO::Watchers::IO.new(r, :r)
       io_watcher.close
-      expect {io_watcher.wait_read}.to raise_error(EOFError)
+      expect {io_watcher.wait_readable}.to raise_error(EOFError)
     end
   end
   describe "Watchers::IO with beam" do
@@ -24,7 +24,7 @@ RSpec.describe LightIO::Watchers::IO do
       r, w = IO.pipe
       b = LightIO::Beam.new {
         io_watcher = LightIO::Watchers::IO.new(r, :r)
-        io_watcher.wait_read
+        io_watcher.wait_readable
         data = r.read
         io_watcher.close
         data
@@ -39,14 +39,14 @@ RSpec.describe LightIO::Watchers::IO do
       r, w = IO.pipe
       b = LightIO::Beam.new {
         io_watcher = LightIO::Watchers::IO.new(r, :r)
-        io_watcher.wait_read
+        io_watcher.wait_readable
         data = r.read
         io_watcher.close
         data
       }
       b2 = LightIO::Beam.new {
         io_watcher = LightIO::Watchers::IO.new(w, :w)
-        io_watcher.wait_write
+        io_watcher.wait_writable
         w << "Hello"
         io_watcher.close
         w.close
@@ -59,7 +59,7 @@ RSpec.describe LightIO::Watchers::IO do
       r, w = IO.pipe
       LightIO::Beam.new {w << "Hello from Beam"; w.close}
       io_watcher = LightIO::Watchers::IO.new(r, :r)
-      io_watcher.wait_read
+      io_watcher.wait_readable
       expect(r.read).to be == "Hello from Beam"
       io_watcher.close
     end
@@ -70,7 +70,7 @@ RSpec.describe LightIO::Watchers::IO do
       r, _w = IO.pipe
       b = LightIO::Beam.new {
         io_watcher = LightIO::Watchers::IO.new(r, :r)
-        data = if io_watcher.wait_read(0.001)
+        data = if io_watcher.wait_readable(0.001)
                  r.read
                end
         io_watcher.close
@@ -82,7 +82,7 @@ RSpec.describe LightIO::Watchers::IO do
     it "root wait until timeout" do
       r, _w = IO.pipe
       io_watcher = LightIO::Watchers::IO.new(r, :r)
-      data = if io_watcher.wait_read(0.001)
+      data = if io_watcher.wait_readable(0.001)
                r.read
              end
       io_watcher.close
@@ -99,7 +99,7 @@ RSpec.describe LightIO::Watchers::IO do
         b = LightIO::Beam.new(cr, w) {|r, w|
           io_watcher = LightIO::Watchers::IO.new(r, :r)
           loop do
-            io_watcher.wait_read
+            io_watcher.wait_readable
             data = r.readline
             w.puts(data)
           end
@@ -112,17 +112,17 @@ RSpec.describe LightIO::Watchers::IO do
       b1.join(0.001); b2.join(0.001)
       w1.puts("hello")
       r1_watcher = LightIO::Watchers::IO.new(r1, :r)
-      r1_watcher.wait_read
+      r1_watcher.wait_readable
       expect(r1.readline).to be == "hello\n"
       w2.puts("world")
       r2_watcher = LightIO::Watchers::IO.new(r2, :r)
-      r2_watcher.wait_read
+      r2_watcher.wait_readable
       expect(r2.readline).to be == "world\n"
       w1.puts("b1 still works")
-      r1_watcher.wait_read
+      r1_watcher.wait_readable
       expect(r1.readline).to be == "b1 still works\n"
       w2.puts("b2 is also cool")
-      r2_watcher.wait_read
+      r2_watcher.wait_readable
       expect(r2.readline).to be == "b2 is also cool\n"
       r1_watcher.close
       r2_watcher.close

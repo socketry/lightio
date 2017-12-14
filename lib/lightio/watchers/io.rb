@@ -52,7 +52,7 @@ module LightIO::Watchers
     # Blocking until io is readable
     # @param [Numeric]  timeout return nil after timeout seconds, otherwise return self
     # @return [LightIO::Watchers::IO, nil]
-    def wait_read(timeout=nil)
+    def wait_readable(timeout=nil)
       LightIO::Timeout.timeout(timeout) do
         wait_for :r
         self
@@ -64,7 +64,7 @@ module LightIO::Watchers
     # Blocking until io is writeable
     # @param [Numeric]  timeout return nil after timeout seconds, otherwise return self
     # @return [LightIO::Watchers::IO, nil]
-    def wait_write(timeout=nil)
+    def wait_writable(timeout=nil)
       LightIO::Timeout.timeout(timeout) do
         wait_for :w
         self

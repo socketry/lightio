@@ -13,7 +13,7 @@ class EchoServer
   def run
     # wait server until readable
     server_watcher = LightIO::Watchers::IO.new(@server, :r)
-    while server_watcher.wait_read
+    while server_watcher.wait_readable
       socket = @server.accept
       _, port, host = socket.peeraddr
       puts "accept connection from #{host}:#{port}"
@@ -23,7 +23,7 @@ class EchoServer
       LightIO::Beam.new(socket) do |socket|
         socket_watcher = LightIO::Watchers::IO.new(socket, :r)
         begin
-          while socket_watcher.wait_read
+          while socket_watcher.wait_readable
             echo(socket)
           end
         rescue EOFError
