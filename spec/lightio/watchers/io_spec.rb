@@ -2,16 +2,6 @@ require 'spec_helper'
 
 RSpec.describe LightIO::Watchers::IO do
   describe "Watchers::IO" do
-    it 'can not wait for non interests' do
-      r, w = IO.pipe
-      io_r = LightIO::Watchers::IO.new(r, :r)
-      expect {io_r.wait_writable}.to raise_error(ArgumentError)
-      io_r.close
-      io_w = LightIO::Watchers::IO.new(w, :w)
-      expect {io_w.wait_readable}.to raise_error(ArgumentError)
-      io_w.close
-    end
-
     it 'can not call wait on closed io watcher' do
       r, w = IO.pipe
       io_watcher = LightIO::Watchers::IO.new(r, :r)

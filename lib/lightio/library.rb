@@ -1,6 +1,8 @@
-require 'lightio/library/queue'
-require 'lightio/library/kernel_ext'
-require 'lightio/library/timeout'
+require_relative 'library/queue'
+require_relative 'library/kernel_ext'
+require_relative 'library/timeout'
+require_relative 'library/io'
+require_relative 'library/socket'
 
 module LightIO
   # Library include modules can cooperative with LightIO::Beam

@@ -1,3 +1,5 @@
+require 'forwardable'
+
 module LightIO::Watchers
   # LightIO::Watchers::IO provide a NIO::Monitor wrap to manage 'raw' socket / io
   #
@@ -15,14 +17,14 @@ module LightIO::Watchers
     # @param [Socket]  io An IO-able object
     # @param [Symbol]  interests :r, :w, :rw - Is io readable? writeable? or both
     # @return [LightIO::Watchers::IO]
-    def initialize(io, interests)
+    def initialize(io, interests=:r)
       @io = io
       @ioloop = LightIO::Core::IOloop.current
       @waiting = false
-      @wait_for = nil
       # NIO monitor
       @monitor = @ioloop.add_io_wait(@io, interests) {callback_on_waiting}
       ObjectSpace.define_finalizer(self, self.class.finalizer(@monitor))
+      @error = nil
     end
 
     class << self
@@ -31,68 +33,45 @@ module LightIO::Watchers
       end
     end
 
-    def interests
-      @monitor.interests
-    end
+    extend Forwardable
+    def_delegators :@monitor, :interests, :interests=, :closed?, :readable?, :writable?, :writeable?
 
-    # Replace current interests
-    def interests=(interests)
-      @monitor.interests = interests
-    end
-
-    # Blocking until io interests is satisfied
-    def wait_for(interests)
-      if (self.interests == :w || self.interests == :r) && interests != self.interests
-        raise ArgumentError, "IO interests is #{self.interests}, can't waiting for #{interests}"
-      end
-      @wait_for = interests
-      wait
-    end
 
     # Blocking until io is readable
     # @param [Numeric]  timeout return nil after timeout seconds, otherwise return self
     # @return [LightIO::Watchers::IO, nil]
     def wait_readable(timeout=nil)
-      LightIO::Timeout.timeout(timeout) do
-        wait_for :r
-        self
-      end
-    rescue Timeout::Error
-      nil
+      wait timeout, :read
     end
 
-    # Blocking until io is writeable
+    # Blocking until io is writable
     # @param [Numeric]  timeout return nil after timeout seconds, otherwise return self
     # @return [LightIO::Watchers::IO, nil]
     def wait_writable(timeout=nil)
+      wait timeout, :write
+    end
+
+    def wait(timeout=nil, mode=:read)
       LightIO::Timeout.timeout(timeout) do
-        wait_for :w
+        interests = {read: :r, write: :w, read_write: :rw}[mode]
+        self.interests = interests
+        wait_in_ioloop
         self
       end
     rescue Timeout::Error
       nil
     end
 
-
-    def start(ioloop)
-      # do nothing
-    end
-
-    # stop io listening
     def close
       @monitor.close
+      @error = IOError.new('closed stream')
+      callback_on_waiting
     end
 
-    def close?
-      @monitor.close?
-    end
 
-    def wait
-      raise LightIO::Error, "Watchers::IO can't cross threads" if @ioloop != LightIO::Core::IOloop.current
-      raise EOFError, "can't wait closed IO watcher" if @monitor.closed?
-      @waiting = true
-      @ioloop.wait(self)
-      @waiting = false
+    # just implement IOloop#wait watcher interface
+    def start(ioloop)
+      # do nothing
     end
 
     def set_callback(&blk)
@@ -101,16 +80,33 @@ module LightIO::Watchers
 
     private
 
+    # Blocking until io interests is satisfied
+    def wait_in_ioloop
+      raise LightIO::Error, "Watchers::IO can't cross threads" if @ioloop != LightIO::Core::IOloop.current
+      raise EOFError, "can't wait closed IO watcher" if @monitor.closed?
+      @waiting = true
+      @ioloop.wait(self)
+      @waiting = false
+    end
+
     def callback_on_waiting
       # only call callback on waiting
-      callback.call if @waiting && io_is_ready?
+      return unless @waiting && io_is_ready?
+      if @error
+        # simulate set error, ioloop should return to current beam
+        callback.call(@error, LightIO::Beam.current)
+      else
+        callback.call
+      end
     end
 
     def io_is_ready?
-      if @wait_for == :r
-        @monitor.readable?
-      elsif @wait_for == :w
-        @monitor.writeable?
+      if interests == :r
+        readable?
+      elsif interests == :w
+        writeable?
+      else
+        readable? || writeable?
       end
     end
   end

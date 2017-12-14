@@ -22,10 +22,14 @@ module LightIO::Core
     #
     # use this method to set back result
     def transfer(value=nil)
-      raise Error, "state error" if done?
+      raise LightIO::Error, "state error" if done?
       @value = value
       done!
       @light_fiber.transfer if @light_fiber
+    end
+
+    def value=(value)
+      transfer(value)
     end
 
     # Get value
@@ -33,7 +37,7 @@ module LightIO::Core
     # this method will block current beam/fiber, until future result is set.
     def value
       return @value if done?
-      raise Error, 'already used' if @light_fiber
+      raise LightIO::Error, 'already used' if @light_fiber
       @light_fiber = LightFiber.current
       @ioloop.transfer
       @value

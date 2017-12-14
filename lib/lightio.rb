@@ -3,6 +3,7 @@ require 'lightio/version'
 require 'lightio/errors'
 require 'lightio/core'
 require 'lightio/watchers'
+require 'lightio/wrap'
 require 'lightio/library'
 
 # LightIO provide light-weight executor: LightIO::Beam and batch io libraries,

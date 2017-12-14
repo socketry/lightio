@@ -1,8 +1,8 @@
 # Core
-require 'lightio/core/ioloop'
-require 'lightio/core/light_fiber'
-require 'lightio/core/future'
-require 'lightio/core/beam'
+require_relative 'core/ioloop'
+require_relative 'core/light_fiber'
+require_relative 'core/future'
+require_relative 'core/beam'
 
 # LightIO::Core include core classes: Beam, IOloop, Future
 #
