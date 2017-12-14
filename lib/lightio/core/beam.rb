@@ -17,6 +17,16 @@ module LightIO::Core
   #   b.alive? # false
   class Beam < LightFiber
 
+    # special class for simulate Thread#raise for Beam
+    class BeamError
+      attr_reader :error, :parent
+
+      def initialize(error)
+        @error = error
+        @parent = Beam.current
+      end
+    end
+
     # Create a new beam
     #
     # Beam is light-weight executor, provide thread-like interface
@@ -92,6 +102,14 @@ module LightIO::Core
       dead
       parent.transfer if self == Beam.current
       self
+    end
+
+    # Fiber not provide raise method, so we have to simulate one
+    # @param [BeamError]  error currently only support raise BeamError
+    def raise(error)
+      super unless error.is_a?(BeamError)
+      self.parent = error.parent if error.parent
+      raise error.error
     end
 
     class << self

@@ -38,12 +38,12 @@ module LightIO::Core
       future = Future.new
       # add watcher to loop
       id = Object.new
-      watcher.set_callback {|err, parent| future.transfer([id, err, parent])}
+      watcher.set_callback {|err| future.transfer([id, err])}
       watcher.start(self)
       # trigger a fiber switch
       # wait until watcher is ok
       # then do work
-      response_id, err, parent = future.value
+      response_id, err = future.value
       if response_id != id
         raise InvalidTransferError, "expect #{id}, but get #{result}"
       elsif err
@@ -51,8 +51,7 @@ module LightIO::Core
         # simulate Thread#raise to Beam , that we can shutdown beam blocking by socket accepting
         # transfer back to which beam occur this err
         # not sure this is a right way to do it
-        LightIO::Core::Beam.current.send(:parent=, parent) if parent
-        raise err
+        LightIO::Core::Beam.current.raise(err)
       end
     end
 

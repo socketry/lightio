@@ -93,8 +93,8 @@ module LightIO::Watchers
       # only call callback on waiting
       return unless @waiting && io_is_ready?
       if @error
-        # simulate set error, ioloop should return to current beam
-        callback.call(@error, LightIO::Beam.current)
+        # if error occurred in io waiting, send it to callback, see IOloop#wait
+        callback.call(LightIO::Core::Beam::BeamError.new(@error))
       else
         callback.call
       end
