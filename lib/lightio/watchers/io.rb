@@ -17,7 +17,7 @@ module LightIO::Watchers
     # @param [Socket]  io An IO-able object
     # @param [Symbol]  interests :r, :w, :rw - Is io readable? writeable? or both
     # @return [LightIO::Watchers::IO]
-    def initialize(io, interests=:r)
+    def initialize(io, interests=:rw)
       @io = io
       @ioloop = LightIO::Core::IOloop.current
       @waiting = false

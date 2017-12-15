@@ -107,9 +107,7 @@ module LightIO::Core
       def handle_selectables
         @selector.select(0) do |monitor|
           # invoke callback if io is ready
-          if monitor.readiness
-            monitor.value.call(monitor.io)
-          end
+          monitor.value.call(monitor.io)
         end
       end
 
