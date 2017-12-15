@@ -54,7 +54,7 @@ module LightIO::Wrap
         rescue IO::WaitReadable
           @io_watcher.wait_readable
         rescue IO::WaitWritable
-          @IO_watcher.wait_writable
+          @io_watcher.wait_writable
         end
       end
     end
