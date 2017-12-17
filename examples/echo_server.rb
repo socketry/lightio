@@ -24,7 +24,7 @@ class EchoServer
   end
 
   def echo(socket)
-    data = socket.read(4096)
+    data = socket.readpartial(4096)
     socket.write(data)
   rescue EOFError
     _, port, host = socket.peeraddr
