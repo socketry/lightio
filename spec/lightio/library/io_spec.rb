@@ -75,4 +75,84 @@ RSpec.describe LightIO::Library::IO do
       w.close
     end
   end
+
+  describe "#read" do
+    let(:pipe) {LightIO::Library::IO.pipe}
+    after {pipe.each(&:close)}
+
+    it 'length is negative' do
+      r, w = pipe
+      expect {r.read(-1)}.to raise_error(ArgumentError)
+    end
+
+    context 'length is nil' do
+      it "should read until EOF" do
+        r, w = pipe
+        w.puts "hello"
+        w.puts "world"
+        w.close
+        expect(r.read) == "hello\nworld\n"
+        expect(r.read) == ""
+        expect(r.read(nil)) == ""
+      end
+
+      it "use outbuf" do
+        r, w = pipe
+        w.puts "hello"
+        w.puts "world"
+        w.close
+        outbuf = "origin content should be remove"
+        expect(r.read(nil, outbuf)) == "hello\nworld\n"
+        expect(outbuf) == "hello\nworld\n"
+      end
+
+      it "blocking until read EOF" do
+        r, w = pipe
+        w.puts "hello"
+        w.puts "world"
+        expect do
+          LightIO::Timeout.timeout(0.0001) do
+            r.read
+          end
+        end.to raise_error(LightIO::Timeout::Error)
+        w.close
+        expect(r.read) == "hello\nworld\n"
+      end
+    end
+
+    context 'length is positive' do
+      it "should read length" do
+        r, w = pipe
+        w.puts "hello"
+        w.puts "world"
+        w.close
+        expect(r.read(5)) == "hello"
+        expect(r.read(1)) == "\n"
+        expect(r.read) == "world\n"
+      end
+
+      it "use outbuf" do
+        r, w = pipe
+        w.puts "hello"
+        w.puts "world"
+        w.close
+        outbuf = "origin content should be remove"
+        expect(r.read(5, outbuf)) == "hello"
+        expect(outbuf) == "hello"
+      end
+
+      it "blocking until read length" do
+        r, w = pipe
+        w.write "hello"
+        expect do
+          LightIO::Timeout.timeout(0.0001) do
+            r.read(10)
+          end
+        end.to raise_error(LightIO::Timeout::Error)
+        w.write "world"
+        w.close
+        expect(r.read(10)) == "helloworld"
+      end
+    end
+  end
 end

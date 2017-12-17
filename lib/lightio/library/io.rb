@@ -9,6 +9,22 @@ module LightIO::Library
 
     wrap_blocking_methods :read, :write, exception_symbol: false
 
+    def read(length=nil, outbuf=nil)
+      raise ArgumentError, "negative length #{length} given" if length && length < 0
+      (outbuf ||= "").clear
+      loop do
+        readlen = length.nil? ? 4096 : length - outbuf.size
+        begin
+          outbuf << wait_nonblock(:read_nonblock, readlen, exception_symbol: false)
+          if length == outbuf.size
+            return outbuf
+          end
+        rescue EOFError
+          return outbuf
+        end
+      end
+    end
+
     class << self
       def open(*args)
         io = self.new(*args)
