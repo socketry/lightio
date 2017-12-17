@@ -63,6 +63,7 @@ module LightIO::Watchers
     end
 
     def close
+      return if closed?
       @monitor.close
       @error = IOError.new('closed stream')
       callback_on_waiting
