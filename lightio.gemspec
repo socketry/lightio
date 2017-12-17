@@ -6,7 +6,7 @@ require "lightio/version"
 Gem::Specification.new do |spec|
   spec.name          = "lightio"
   spec.version       = LightIO::VERSION
-  spec.authors       = ["jjy"]
+  spec.authors       = ["Jiang Jinyang"]
   spec.email         = ["jjyruby@gmail.com"]
 
   spec.summary       = %q{LightIO is a ruby networking library, that combines ruby fiber and fast IO event loop.}
