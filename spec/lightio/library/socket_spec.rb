@@ -22,7 +22,7 @@ class EchoServer
   end
 
   def echo(socket)
-    data = socket.read(4096)
+    data = socket.readpartial(4096)
     socket.write(data)
   rescue EOFError
     _, port, host = socket.peeraddr
@@ -99,7 +99,7 @@ RSpec.describe LightIO::Library::Socket do
         3.times {
           msg = "hello from b1"
           client.write(msg)
-          response << client.read(4096)
+          response << client.readpartial(4096)
           LightIO.sleep(0)
         }
         client.close
@@ -111,7 +111,7 @@ RSpec.describe LightIO::Library::Socket do
         3.times {
           msg = "hello from b2"
           client.write(msg)
-          response << client.read(4096)
+          response << client.readpartial(4096)
           LightIO.sleep(0)
         }
         client.close

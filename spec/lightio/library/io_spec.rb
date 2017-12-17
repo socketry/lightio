@@ -154,5 +154,49 @@ RSpec.describe LightIO::Library::IO do
         expect(r.read(10)) == "helloworld"
       end
     end
+
+    describe "#readpartial" do
+      let(:pipe) {LightIO::Library::IO.pipe}
+      after {pipe.each(&:close)}
+
+      it 'length is negative' do
+        r, w = pipe
+        expect {r.readpartial(-1)}.to raise_error(ArgumentError)
+      end
+
+      it "return immediately content" do
+        r, w = pipe
+        w << "hello"
+        expect(r.readpartial(4096)) == "hello"
+      end
+
+      it "raise EOF" do
+        r, w = pipe
+        w << "hello"
+        w.close
+        expect(r.readpartial(4096)) == "hello"
+        expect {r.readpartial(4096)}.to raise_error EOFError
+      end
+
+      it "with outbuf" do
+        r, w = pipe
+        w << "hello"
+        outbuf = "origin content should be remove"
+        expect(r.readpartial(4096, outbuf)) == "hello"
+        expect(outbuf) == "hello"
+      end
+
+      it "blocking until readable" do
+        r, w = pipe
+        expect do
+          LightIO::Timeout.timeout(0.0001) do
+            r.readpartial(4096)
+          end
+        end.to raise_error(LightIO::Timeout::Error)
+        w << "hello world"
+        w.close
+        expect(r.readpartial(4096)) == "hello world"
+      end
+    end
   end
 end

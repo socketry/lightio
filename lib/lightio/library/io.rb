@@ -25,6 +25,12 @@ module LightIO::Library
       end
     end
 
+    def readpartial(maxlen, outbuf=nil)
+      (outbuf ||= "").clear
+      outbuf << wait_nonblock(:read_nonblock, maxlen, exception_symbol: false)
+      outbuf
+    end
+
     class << self
       def open(*args)
         io = self.new(*args)
