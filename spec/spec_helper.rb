@@ -1,3 +1,8 @@
+if ENV['COVERAGE']
+  require 'coveralls'
+  Coveralls.wear!
+end
+
 require "bundler/setup"
 require "lightio"
 require_relative "helper_methods"
