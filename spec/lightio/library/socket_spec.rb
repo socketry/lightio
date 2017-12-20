@@ -75,6 +75,9 @@ RSpec.describe LightIO::Library::Socket do
       begin
         client = LightIO::Socket.new(LightIO::Socket::AF_INET, LightIO::Socket::SOCK_STREAM)
         client.connect LightIO::Socket.pack_sockaddr_in(port, '127.0.0.1')
+      rescue Errno::EISCONN
+        # mean connect is success before ruby 2.2.7 *_* en...
+        nil
       rescue Errno::ECONNREFUSED
         beam.join(0.0001)
         retry

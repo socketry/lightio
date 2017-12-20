@@ -78,7 +78,7 @@ RSpec.describe LightIO::Library::IO do
 
   describe "#read" do
     let(:pipe) {LightIO::Library::IO.pipe}
-    after {pipe.each(&:close)}
+    after {pipe.each(&:close) rescue nil}
 
     it 'length is negative' do
       r, w = pipe
@@ -157,7 +157,7 @@ RSpec.describe LightIO::Library::IO do
 
     describe "#readpartial" do
       let(:pipe) {LightIO::Library::IO.pipe}
-      after {pipe.each(&:close)}
+      after {pipe.each(&:close) rescue nil}
 
       it 'length is negative' do
         r, w = pipe
