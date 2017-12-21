@@ -31,33 +31,15 @@ Or install it yourself as:
 
     $ gem install lightio
 
-## Usage
-
-``` ruby
-require 'lightio'
-
-start = Time.now
-
-beams = 1000.times.map do
-  # LightIO::Beam is a thread-like executor, use it instead Thread
-  LightIO::Beam.new do
-    # do some io operations in beam
-    LightIO.sleep(1)
-  end
-end
-
-beams.each(&:join)
-seconds = Time.now - start
-puts "1000 beams take #{seconds - 1} seconds to create"
-```
-
-View more [examples](/examples).
-
 ## Documentation
 
-See [wiki](https://github.com/jjyr/lightio/wiki) for more information
+[Please see LightIO Wiki](https://github.com/jjyr/lightio/wiki) for more information.
 
-[API Documentation](http://www.rubydoc.info/gems/lightio/frames)
+The following documentations is also usable:
+
+* [Basic usage](https://github.com/socketry/lightio/wiki/Basic-Usage)
+* [YARD documentation](http://www.rubydoc.info/gems/lightio/frames)
+* [Examples](/examples)
 
 ## Discussion
 
