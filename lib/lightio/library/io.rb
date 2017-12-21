@@ -9,6 +9,8 @@ module LightIO::Library
 
     wrap_blocking_methods :read, :write, exception_symbol: false
 
+    alias_method :<<, :write
+
     def read(length=nil, outbuf=nil)
       raise ArgumentError, "negative length #{length} given" if length && length < 0
       (outbuf ||= "").clear
