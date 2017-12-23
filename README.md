@@ -43,7 +43,7 @@ The following documentations is also usable:
 
 ## Discussion
 
-[Discussion on Gitter](https://gitter.im/lightio-dev/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
+https://groups.google.com/group/lightio
 
 ## Development
 
