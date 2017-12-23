@@ -76,7 +76,7 @@ module LightIO::Library
 
     class << self
       def for_fd(fd)
-        Socket._wrap(raw_class.for_fd(fd))
+        self._wrap(raw_class.for_fd(fd))
       end
     end
   end
@@ -91,7 +91,7 @@ module LightIO::Library
     ## implement ::Socket instance methods
     def accept
       socket, addrinfo = wait_nonblock(:accept_nonblock)
-      [Socket._wrap(socket), Addrinfo._wrap(addrinfo)]
+      [self.class._wrap(socket), Addrinfo._wrap(addrinfo)]
     end
 
     def sys_accept
@@ -149,7 +149,7 @@ module LightIO::Library
     ## implement ::Socket instance methods
     def accept
       socket = wait_nonblock(:accept_nonblock)
-      Socket._wrap(socket)
+      TCPSocket._wrap(socket)
     end
 
     def sys_accept

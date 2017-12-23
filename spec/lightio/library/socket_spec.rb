@@ -51,7 +51,7 @@ RSpec.describe LightIO::Library::Socket do
     let(:port) {pick_random_port}
     let(:beam) {LightIO::Beam.new do
       LightIO::TCPServer.open(port) {|serv|
-        s, addr = serv.accept
+        s = serv.accept
         s.puts Date.today
         s.close
       }
@@ -98,6 +98,33 @@ RSpec.describe LightIO::Library::Socket do
     end
   end
 
+  describe "#for_fd" do
+    let(:port) {pick_random_port}
+    let(:beam) {LightIO::Beam.new do
+      LightIO::TCPServer.open(port) {|serv|
+        s = serv.accept
+        s.puts Date.today
+        s.close
+      }
+    end}
+
+    it "return different types" do
+      begin
+        client = LightIO::TCPSocket.new 'localhost', port
+      rescue Errno::ECONNREFUSED
+        beam.join(0.0001)
+        retry
+      end
+      s = LightIO::Socket.for_fd(client.fileno)
+      expect(s).to a_kind_of(LightIO::Socket)
+      s = LightIO::TCPSocket.for_fd(client.fileno)
+      expect(s).to a_kind_of(LightIO::TCPSocket)
+      s = LightIO::TCPServer.for_fd(client.fileno)
+      expect(s).to a_kind_of(LightIO::TCPServer)
+      client.close
+    end
+  end
+
 
   describe "echo server and multi clients" do
     it "multi clients" do
@@ -138,7 +165,7 @@ RSpec.describe LightIO::Library::Socket do
   end
 
   describe LightIO::Library::Addrinfo do
-    it 'return wrapped socket' do
+    it '#bind return wrapped socket' do
       addrinfo = LightIO::Library::Addrinfo.tcp("127.0.0.1", 0)
       expect(addrinfo).to be_kind_of(LightIO::Library::Addrinfo)
       socket = addrinfo.bind
