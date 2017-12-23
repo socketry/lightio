@@ -101,9 +101,9 @@ module LightIO::Wrap
             else
               return result
           end
-        rescue IO::WaitReadable
+        rescue RAW_IO::WaitReadable
           @io_watcher.wait_readable
-        rescue IO::WaitWritable
+        rescue RAW_IO::WaitWritable
           @io_watcher.wait_writable
         end
       end

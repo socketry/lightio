@@ -8,7 +8,16 @@ RSpec.describe LightIO::Watchers::IO do
       io_watcher.close
       expect {io_watcher.wait_readable}.to raise_error(EOFError)
     end
+
+    it 'can not cross threads' do
+      r, w = IO.pipe
+      io_watcher = LightIO::Watchers::IO.new(r, :r)
+      expect {Thread.start {io_watcher.wait_readable}.value}.to raise_error(LightIO::Error)
+      io_watcher.close
+      r.close; w.close
+    end
   end
+
   describe "Watchers::IO with beam" do
     it "#wait_read works" do
       r, w = IO.pipe

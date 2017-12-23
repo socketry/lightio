@@ -98,7 +98,7 @@ RSpec.describe LightIO::Library::Socket do
     end
   end
 
-  describe "#for_fd" do
+  context "some methods should return correct type" do
     let(:port) {pick_random_port}
     let(:beam) {LightIO::Beam.new do
       LightIO::TCPServer.open(port) {|serv|
@@ -108,13 +108,16 @@ RSpec.describe LightIO::Library::Socket do
       }
     end}
 
-    it "return different types" do
+    let (:client) {
       begin
         client = LightIO::TCPSocket.new 'localhost', port
       rescue Errno::ECONNREFUSED
         beam.join(0.0001)
         retry
       end
+    }
+
+    it "#for_fd" do
       s = LightIO::Socket.for_fd(client.fileno)
       expect(s).to a_kind_of(LightIO::Socket)
       s = LightIO::TCPSocket.for_fd(client.fileno)
@@ -122,6 +125,22 @@ RSpec.describe LightIO::Library::Socket do
       s = LightIO::TCPServer.for_fd(client.fileno)
       expect(s).to a_kind_of(LightIO::TCPServer)
       client.close
+    end
+
+    it "#to_io" do
+      expect(client.to_io).to a_kind_of(LightIO::TCPSocket)
+      s = LightIO::Socket.for_fd(client.fileno)
+      expect(s.to_io).to a_kind_of(LightIO::Socket)
+      s = LightIO::TCPSocket.for_fd(client.fileno)
+      expect(s.to_io).to a_kind_of(LightIO::TCPSocket)
+      s = LightIO::TCPServer.for_fd(client.fileno)
+      expect(s.to_io).to a_kind_of(LightIO::TCPServer)
+      client.close
+
+      r, w = LightIO::IO.pipe
+      expect(r.to_io).to a_kind_of(LightIO::IO)
+      r.close
+      w.close
     end
   end
 

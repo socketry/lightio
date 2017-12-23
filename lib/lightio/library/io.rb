@@ -39,6 +39,10 @@ module LightIO::Library
       @io.close(*args)
     end
 
+    def to_io
+      self
+    end
+
     class << self
       def open(*args)
         io = self.new(*args)
