@@ -37,6 +37,16 @@ class EchoServer
 end
 
 RSpec.describe LightIO::Library::Socket do
+  describe "inherited" do
+    it "inherited correctly" do
+      expect(LightIO::BasicSocket).to be < LightIO::IO
+      expect(LightIO::Socket).to be < LightIO::BasicSocket
+      expect(LightIO::IPSocket).to be < LightIO::BasicSocket
+      expect(LightIO::TCPSocket).to be < LightIO::IPSocket
+      expect(LightIO::TCPServer).to be < LightIO::TCPSocket
+    end
+  end
+
   describe "#accept & #connect" do
     let(:port) {pick_random_port}
     let(:beam) {LightIO::Beam.new do
@@ -124,6 +134,16 @@ RSpec.describe LightIO::Library::Socket do
       expect(b2.value).to be == "hello from b2hello from b2hello from b2"
       server.close
       expect {beam.value}.to raise_error(IOError)
+    end
+  end
+
+  describe LightIO::Library::Addrinfo do
+    it 'return wrapped socket' do
+      addrinfo = LightIO::Library::Addrinfo.tcp("127.0.0.1", 0)
+      expect(addrinfo).to be_kind_of(LightIO::Library::Addrinfo)
+      socket = addrinfo.bind
+      expect(socket).to be_kind_of(LightIO::Library::Socket)
+      socket.close
     end
   end
 end

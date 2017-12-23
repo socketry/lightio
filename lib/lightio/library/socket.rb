@@ -1,11 +1,78 @@
 require 'socket'
+
 module LightIO::Library
 
-  class BasicSocket < IO
+  class Addrinfo
     include LightIO::Wrap::Wrapper
+    wrap ::Addrinfo
+
+    module WrapperHelper
+      protected
+      def wrap_socket_method(method)
+        define_method method do |*args|
+          socket = Socket._wrap(@io.send(method, *args))
+          if block_given?
+            begin
+              yield socket
+            ensure
+              socket.close
+            end
+          else
+            socket
+          end
+        end
+      end
+
+      def wrap_socket_methods(*methods)
+        methods.each {|m| wrap_socket_method(m)}
+      end
+
+      def wrap_addrinfo_return_method(method)
+        define_method method do |*args|
+          result = (@io || raw_class).send(method, *args)
+          if result.is_a?(raw_class)
+            _wrap(result)
+          elsif result.respond_to?(:map)
+            result.map {|r| _wrap(r)}
+          else
+            result
+          end
+        end
+      end
+
+      def wrap_addrinfo_return_methods(*methods)
+        methods.each {|m| wrap_addrinfo_return_method(m)}
+      end
+    end
+
+    extend WrapperHelper
+
+    wrap_socket_methods :bind, :connect, :connect_from, :connect_to, :listen
+
+    wrap_addrinfo_return_methods :family_addrinfo, :ipv6_to_ipv4
+
+    class << self
+      extend WrapperHelper
+
+      def foreach(*args, &block)
+        Addrinfo.getaddrinfo(*args).each(&block)
+      end
+
+      wrap_addrinfo_return_methods :getaddrinfo, :ip, :udp, :tcp, :unix
+    end
+  end
+
+  class BasicSocket < IO
+    include LightIO::Wrap::IOWrapper
     wrap ::BasicSocket
 
     wrap_blocking_methods :recv, :recvmsg, :sendmsg
+
+    def shutdown(*args)
+      # close watcher before io shutdown
+      @io_watcher.close
+      @io.shutdown(*args)
+    end
 
     class << self
       def for_fd(fd)
@@ -16,7 +83,7 @@ module LightIO::Library
 
   class Socket < BasicSocket
     include ::Socket::Constants
-    include LightIO::Wrap::Wrapper
+    include LightIO::Wrap::IOWrapper
     wrap ::Socket
 
     wrap_blocking_methods :connect, :recvfrom
@@ -24,7 +91,7 @@ module LightIO::Library
     ## implement ::Socket instance methods
     def accept
       socket, addrinfo = wait_nonblock(:accept_nonblock)
-      [Socket._wrap(socket), LightIO::Library::Addrinfo._wrap(addrinfo)]
+      [Socket._wrap(socket), Addrinfo._wrap(addrinfo)]
     end
 
     def sys_accept
@@ -61,7 +128,7 @@ module LightIO::Library
 
 
   class IPSocket < BasicSocket
-    include LightIO::Wrap::Wrapper
+    include LightIO::Wrap::IOWrapper
     wrap ::IPSocket
 
     class << self
@@ -70,13 +137,13 @@ module LightIO::Library
   end
 
   class TCPSocket < IPSocket
-    include LightIO::Wrap::Wrapper
+    include LightIO::Wrap::IOWrapper
     wrap ::TCPSocket
     wrap_methods_run_in_threads_pool :gethostbyname
   end
 
   class TCPServer < TCPSocket
-    include LightIO::Wrap::Wrapper
+    include LightIO::Wrap::IOWrapper
     wrap ::TCPServer
 
     ## implement ::Socket instance methods
