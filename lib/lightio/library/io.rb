@@ -35,7 +35,7 @@ module LightIO::Library
 
     def close(*args)
       # close watcher before io closed
-      @io_watcher&.close
+      @io_watcher.close
       @io.close(*args)
     end
 
