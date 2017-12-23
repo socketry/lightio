@@ -1,7 +1,7 @@
 require 'forwardable'
 module LightIO::Library
   class IO
-    include LightIO::Wrap::Wrapper
+    include LightIO::Wrap::IOWrapper
     wrap ::IO
 
     extend Forwardable
@@ -31,6 +31,12 @@ module LightIO::Library
       (outbuf ||= "").clear
       outbuf << wait_nonblock(:read_nonblock, maxlen, exception_symbol: false)
       outbuf
+    end
+
+    def close(*args)
+      # close watcher before io closed
+      @io_watcher&.close
+      @io.close(*args)
     end
 
     class << self
