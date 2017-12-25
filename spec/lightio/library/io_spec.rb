@@ -15,6 +15,20 @@ RSpec.describe LightIO::Library::IO do
     end
   end
 
+
+  describe "#write" do
+    it "#wait works" do
+      r, w = IO.pipe
+      if RUBY_VERSION > '2.5.0'
+        w.write "Hello", "IO"
+      else
+        w.write "Hello IO"
+      end
+      w.close
+      expect(r.read).to be == "Hello IO"
+    end
+  end
+
   describe "#close" do
     it 'should close io watcher too' do
       r, w = LightIO::Library::IO.pipe
