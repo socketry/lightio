@@ -26,6 +26,7 @@ RSpec.describe LightIO::Library::IO do
       end
       w.close
       expect(r.read).to be == "Hello IO"
+      r.close
     end
   end
 
