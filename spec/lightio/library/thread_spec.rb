@@ -131,4 +131,26 @@ RSpec.describe LightIO::Thread do
       expect(result).to be == [1, 2, 3, 4]
     end
   end
+
+  describe "#[]" do
+    it "can only save symbol" do
+      t1 = LightIO::Thread.new {LightIO::Thread.current[:name] = "hello"}
+      t2 = LightIO::Thread.new {LightIO::Thread.current["name"] = "hello"}
+      t1.join; t2.join
+      expect(t1[:name]).to be == "hello"
+      expect(t2[:name]).to be == "hello"
+    end
+
+    it "belongs to fiber scope" do
+      t1 = LightIO::Thread.new {
+        LightIO::Thread.current[:name] = "hello"
+        Fiber.new {
+          expect(t1[:name]).to be_nil
+          t1[:name] = "only in fiber scope"
+        }.resume
+      }
+      t1.join
+      expect(t1[:name]).to be == "hello"
+    end
+  end
 end

@@ -7,9 +7,17 @@ module LightIO::Core
   class LightFiber < Fiber
     attr_reader :ioloop
 
+    ROOT_FIBER = Fiber.current
+
     def initialize(ioloop: IOloop.current, &blk)
       @ioloop = ioloop
       super(&blk)
+    end
+
+    class << self
+      def is_root?(fiber)
+        ROOT_FIBER == fiber
+      end
     end
   end
 end

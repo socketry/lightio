@@ -44,11 +44,11 @@ module LightIO::Library
     end
 
     def []=(name, val)
-      fiber_values[name] = val
+      fiber_values[name.to_sym] = val
     end
 
     def inspect
-      "#<LightIO::Library::Thread:#{object_id} #{status}>"
+      "#<LightIO::Library::Thread:0x00#{object_id.to_s(16)} #{status}>"
     end
 
     private
@@ -62,15 +62,23 @@ module LightIO::Library
     end
 
     def thread_values
+      raise ThreadError unless alive?
       Thread.send(:threads)[object_id] ||= {}
     end
 
     def fibers_and_values
-      @fibers_and_values ||= Hash.new {{}}
+      @fibers_and_values ||= {}
     end
 
     def fiber_values
-      fibers_and_values[Fiber.current]
+      beam_or_fiber = LightIO::Beam.current
+      # ignore LightIO::Thread fiber, Beam fiber, root fiber
+      if beam_or_fiber.is_a?(LightIO::Beam) ||
+        beam_or_fiber.instance_variable_defined?(:@lightio_thread) ||
+        LightIO::Core::LightFiber.is_root?(beam_or_fiber)
+        beam_or_fiber = @beam
+      end
+      fibers_and_values[beam_or_fiber] ||= {}
     end
 
     class << self
@@ -90,7 +98,13 @@ module LightIO::Library
       end
 
       def current
-        LightIO::Beam.current.instance_variable_get(:@lightio_thread) || main
+        beam_of_fiber = LightIO::Beam.current
+        thr = beam_of_fiber.instance_variable_get(:@lightio_thread)
+        return thr if thr
+        return main if LightIO::Core::LightFiber.is_root?(beam_of_fiber)
+        raise LightIO::Error, "Can't find current thread from fiber #{beam_of_fiber.inspect},
+current Thread implementation can't find Thread from Fiber or Beam execution scope,
+please open issues if you really need this feature"
       end
 
       # TODO implement
@@ -139,13 +153,10 @@ module LightIO::Library
         proc {threads.delete(object_id)}
       end
 
-      private
-
-      # TODO how to simulate main thread?
       def main
-        raise
-        @main_thread ||= Thread.new {}
+        RAW_THREAD.main
       end
+      private
 
       # threads and threads variables
       def threads
