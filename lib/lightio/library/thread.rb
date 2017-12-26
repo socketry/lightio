@@ -1,14 +1,132 @@
 module LightIO::Library
   class Thread
-    extend Forwardable
-
     RAW_THREAD = ::Thread
+
+
+    module FallbackHelper
+      module ClassMethods
+        def fallback_method(obj, method, warning_text)
+          define_method method do |*args|
+            warn warning_text
+            obj.public_send method, *args
+          end
+        end
+
+        def fallback_thread_class_methods(*methods)
+          methods.each {|m| fallback_method(RAW_THREAD.main, m, "This method is fallback to native Thread class,"\
+                                                   " it may cause unexpected behaviour,"\
+                                                   " open issues on https://github.com/socketry/lightio/issues"\
+                                                   " if this behaviour not approach you purpose")}
+        end
+      end
+
+      include ClassMethods
+
+      def fallback_main_thread_methods(*methods)
+        methods.each {|m| fallback_method(main, m, "This method is fallback to native main thread,"\
+                                                   " it may cause unexpected behaviour,"\
+                                                   " open issues on https://github.com/socketry/lightio/issues"\
+                                                   " if this behaviour not approach you purpose")}
+      end
+
+      def self.included(base)
+        base.send :extend, ClassMethods
+      end
+    end
+
+    class << self
+      extend Forwardable
+      def_delegators :'LightIO::Library::Thread::RAW_THREAD', :DEBUG, :DEBUG=
+
+      include FallbackHelper
+      fallback_thread_class_methods :abort_on_exception, :abort_on_exception=
+
+      def fork(*args, &blk)
+        obj = allocate
+        obj.send(:init_core, *args, &blk)
+        obj
+      end
+
+      alias start fork
+
+      def kill(thr)
+        thr.kill
+      end
+
+      def current
+        beam_of_fiber = LightIO::Beam.current
+        thr = beam_of_fiber.instance_variable_get(:@lightio_thread)
+        return thr if thr
+        return main if LightIO::Core::LightFiber.is_root?(beam_of_fiber)
+        raise LightIO::Error, "Can't find current thread from fiber #{beam_of_fiber.inspect},"\
+                              "current Thread implementation can't find Thread from Fiber or Beam execution scope,"\
+                              "please open issues on https://github.com/socketry/lightio/issues"\
+                              " if you really need this feature"
+      end
+
+      # TODO implement
+      def exclusive
+        raise
+        yield
+      end
+
+      def list
+        thread_list = []
+        threads.keys.each {|id|
+          begin
+            thr = ObjectSpace._id2ref(id)
+            unless thr.alive?
+              # manually remove thr from threads
+              thr.kill
+              next
+            end
+            thread_list << thr
+          rescue RangeError
+            # mean object is recycled
+            # just wait ruby GC call finalizer to remove it from threads
+            next
+          end
+        }
+        thread_list
+      end
+
+      def pass
+        LightIO::Beam.pass
+      end
+
+      alias stop pass
+
+      def finalizer(object_id)
+        proc {threads.delete(object_id)}
+      end
+
+      def main
+        RAW_THREAD.main
+      end
+
+      private
+
+      # threads and threads variables
+      def threads
+        @threads ||= {}
+      end
+    end
+
+    extend Forwardable
 
     def initialize(*args, &blk)
       init_core(*args, &blk)
     end
 
     def_delegators :@beam, :join, :alive?, :value
+
+    fallback_main_thread_methods :abort_on_exception,
+                                 :abort_on_exception=,
+                                 :handle_interrupt,
+                                 :pending_interrupt,
+                                 :add_trace_func,
+                                 :backtrace,
+                                 :backtrace_locations
 
     def kill
       @beam.kill && self
@@ -79,89 +197,6 @@ module LightIO::Library
         beam_or_fiber = @beam
       end
       fibers_and_values[beam_or_fiber] ||= {}
-    end
-
-    class << self
-      extend Forwardable
-      def_delegators :'LightIO::Library::Thread::RAW_THREAD', :DEBUG, :DEBUG=, :abort_on_exception, :abort_on_exception=
-
-      def fork(*args, &blk)
-        obj = allocate
-        obj.send(:init_core, *args, &blk)
-        obj
-      end
-
-      alias start fork
-
-      def kill(thr)
-        thr.kill
-      end
-
-      def current
-        beam_of_fiber = LightIO::Beam.current
-        thr = beam_of_fiber.instance_variable_get(:@lightio_thread)
-        return thr if thr
-        return main if LightIO::Core::LightFiber.is_root?(beam_of_fiber)
-        raise LightIO::Error, "Can't find current thread from fiber #{beam_of_fiber.inspect},
-current Thread implementation can't find Thread from Fiber or Beam execution scope,
-please open issues if you really need this feature"
-      end
-
-      # TODO implement
-      def handle_interrupt()
-        raise
-      end
-
-      # TODO implement
-      def pending_interrupt
-        raise
-      end
-
-      # TODO implement
-      def exclusive
-        raise
-        yield
-      end
-
-      def list
-        thread_list = []
-        threads.keys.each {|id|
-          begin
-            thr = ObjectSpace._id2ref(id)
-            unless thr.alive?
-              # manually remove thr from threads
-              thr.kill
-              next
-            end
-            thread_list << thr
-          rescue RangeError
-            # mean object is recycled
-            # just wait ruby GC call finalizer to remove it from threads
-            next
-          end
-        }
-        thread_list
-      end
-
-      def pass
-        LightIO::Beam.pass
-      end
-
-      alias stop pass
-
-      def finalizer(object_id)
-        proc {threads.delete(object_id)}
-      end
-
-      def main
-        RAW_THREAD.main
-      end
-      private
-
-      # threads and threads variables
-      def threads
-        @threads ||= {}
-      end
     end
   end
 end
