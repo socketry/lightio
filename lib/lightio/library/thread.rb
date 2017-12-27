@@ -66,7 +66,7 @@ module LightIO::Library
 
       # TODO implement
       def exclusive
-        raise
+        raise "not implement"
         yield
       end
 
@@ -118,7 +118,7 @@ module LightIO::Library
       init_core(*args, &blk)
     end
 
-    def_delegators :@beam, :join, :alive?, :value
+    def_delegators :@beam, :alive?, :value
 
     fallback_main_thread_methods :abort_on_exception,
                                  :abort_on_exception=,
@@ -126,7 +126,10 @@ module LightIO::Library
                                  :pending_interrupt,
                                  :add_trace_func,
                                  :backtrace,
-                                 :backtrace_locations
+                                 :backtrace_locations,
+                                 :priority,
+                                 :priority=,
+                                 :safe_level
 
     def kill
       @beam.kill && self
@@ -140,8 +143,10 @@ module LightIO::Library
     def status
       if Thread.current == self
         'run'
+      elsif alive?
+        @beam.error.nil? ? 'sleep' : 'abouting'
       else
-        alive? ? 'sleep' : false
+        @beam.error.nil? ? false : nil
       end
     end
 
@@ -150,23 +155,58 @@ module LightIO::Library
     end
 
     def thread_variable_get(name)
-      thread_values[name]
+      thread_values[name.to_sym]
     end
 
     def thread_variable_set(name, value)
       thread_values[name.to_sym] = value
     end
 
+    def thread_variable?(key)
+      thread_values.key?(key)
+    end
+
     def [](name)
-      fiber_values[name]
+      fiber_values[name.to_sym]
     end
 
     def []=(name, val)
       fiber_values[name.to_sym] = val
     end
 
+    #TODO
+    def group
+
+    end
+
     def inspect
       "#<LightIO::Library::Thread:0x00#{object_id.to_s(16)} #{status}>"
+    end
+
+    def join(limit=nil)
+      @beam.join(limit) && self
+    end
+
+    def key?(sym)
+      fiber_values.has_key?(sym)
+    end
+
+    def keys
+      fiber_values.keys
+    end
+
+    def raise(exception, message=nil, backtrace=nil)
+      @beam.raise(LightIO::Beam::BeamError.new(exception), message, backtrace)
+    end
+
+    def run
+      Thread.pass
+    end
+
+    alias wakeup run
+
+    def stop?
+      !alive? || status == 'sleep'
     end
 
     private

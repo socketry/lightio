@@ -44,6 +44,7 @@ module LightIO::Core
       # wait until watcher is ok
       # then do work
       response_id, err = future.value
+      current_beam = LightIO::Core::Beam.current
       if response_id != id
         raise InvalidTransferError, "expect #{id}, but get #{result}"
       elsif err
@@ -51,8 +52,10 @@ module LightIO::Core
         # simulate Thread#raise to Beam , that we can shutdown beam blocking by socket accepting
         # transfer back to which beam occur this err
         # not sure this is a right way to do it
-        LightIO::Core::Beam.current.raise(err)
+        current_beam.raise(err) if current_beam.is_a?(LightIO::Core::Beam)
       end
+      # check beam error after wait
+      current_beam.send(:check_and_raise_error) if current_beam.is_a?(LightIO::Core::Beam)
     end
 
     def transfer

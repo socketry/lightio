@@ -27,6 +27,8 @@ module LightIO::Core
       end
     end
 
+    attr_reader :error
+
     # Create a new beam
     #
     # Beam is light-weight executor, provide thread-like interface
@@ -72,9 +74,9 @@ module LightIO::Core
     #
     # @param [Numeric]  limit wait limit seconds if limit > 0, return nil if beam still alive, else return beam self
     # @return [Beam, nil]
-    def join(limit=0)
+    def join(limit=nil)
       # try directly get result
-      if !alive? || limit <= 0
+      if !alive? || limit.nil? || limit <= 0
         # call value to raise error
         value
         return self
@@ -106,10 +108,14 @@ module LightIO::Core
 
     # Fiber not provide raise method, so we have to simulate one
     # @param [BeamError]  error currently only support raise BeamError
-    def raise(error)
+    def raise(error, message=nil, backtrace=nil)
       super unless error.is_a?(BeamError)
       self.parent = error.parent if error.parent
-      raise error.error
+      if Beam.current == self
+        raise(error.error, message, backtrace)
+      else
+        @error ||= error
+      end
     end
 
     class << self

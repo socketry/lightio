@@ -73,6 +73,18 @@ RSpec.describe LightIO::Thread do
       t.terminate
       expect(t.status).to be_falsey
     end
+
+    it "terminated with exception" do
+      t = LightIO::Thread.new {1 / 0}
+      t.join rescue nil
+      expect(t.status).to be_nil
+    end
+
+    it "aborting" do
+      t = LightIO::Thread.new {LightIO.sleep}
+      t.raise "about"
+      expect(t.status).to be == 'abouting'
+    end
   end
 
   describe "#abort_on_exception" do
@@ -138,6 +150,7 @@ RSpec.describe LightIO::Thread do
       t2 = LightIO::Thread.new {LightIO::Thread.current["name"] = "hello"}
       t1.join; t2.join
       expect(t1[:name]).to be == "hello"
+      expect(t1["name"]).to be == "hello"
       expect(t2[:name]).to be == "hello"
     end
 
@@ -151,6 +164,109 @@ RSpec.describe LightIO::Thread do
       }
       t1.join
       expect(t1[:name]).to be == "hello"
+    end
+
+    describe "#key?" do
+      it "can only save symbol" do
+        t1 = LightIO::Thread.new {LightIO::Thread.current[:name] = "hello"}
+        t1.join
+        expect(t1.key?(:name)).to be_truthy
+        expect(t1.key?(:none)).to be_falsey
+      end
+    end
+
+    describe "#keys" do
+      it "return keys" do
+        t1 = LightIO::Thread.new {}
+        t1[:name] = 1
+        t1[:hello] = true
+        expect(t1.keys).to be == [:name, :hello]
+      end
+    end
+  end
+
+  describe "#priority" do
+    it "not nil" do
+      expect(LightIO::Thread.new {}.priority).to_not be_nil
+    end
+  end
+
+  describe "#raise" do
+    it "raise error will kill a thread" do
+      t = LightIO::Thread.new {LightIO.sleep(0.0001)}
+      t.raise(ArgumentError)
+      expect {t.value}.to raise_error ArgumentError
+      expect(t.alive?).to be_falsey
+    end
+  end
+
+  describe "#run" do
+    it "wakeup sleeping thread" do
+      result = []
+      t = LightIO::Thread.new {result << 1; LightIO::Thread.stop; result << 3}
+      t.run
+      result << 2
+      t.run
+      expect(result).to be == [1, 2, 3]
+    end
+  end
+
+  describe "#stop?" do
+    it "dead thread" do
+      t = LightIO::Thread.new {}
+      t.kill
+      expect(t.stop?).to be_truthy
+    end
+
+    it "sleep thread" do
+      t = LightIO::Thread.new {}
+      expect(t.stop?).to be_truthy
+    end
+
+    it "sleep thread" do
+      t = LightIO::Thread.new {LightIO::Thread.current.stop?}
+      expect(t.value).to be_falsey
+    end
+  end
+
+  describe "#thread_variables" do
+    it "can only save symbol" do
+      t1 = LightIO::Thread.new {LightIO::Thread.current.thread_variable_set(:name, "hello")}
+      t2 = LightIO::Thread.new {LightIO::Thread.current.thread_variable_set("name", "hello")}
+      t1.join; t2.join
+      expect(t1.thread_variable_get(:name)).to be == "hello"
+      expect(t1.thread_variable_get("name")).to be == "hello"
+      expect(t2.thread_variable_get(:name)).to be == "hello"
+    end
+
+    it "belongs to thread scope" do
+      t1 = LightIO::Thread.new {
+        LightIO::Thread.current.thread_variable_set(:name, "hello")
+        Fiber.new {
+          expect(t1.thread_variable_get(:name)).to be == "hello"
+          t1.thread_variable_set(:name, "in thread scope")
+        }.resume
+      }
+      t1.join
+      expect(t1.thread_variable_get(:name)).to be == "in thread scope"
+    end
+
+    describe "#thread_variable?" do
+      it "can only save symbol" do
+        t1 = LightIO::Thread.new {LightIO::Thread.current.thread_variable_set(:name, "hello")}
+        t1.join
+        expect(t1.thread_variable?(:name)).to be_truthy
+        expect(t1.thread_variable?(:none)).to be_falsey
+      end
+    end
+
+    describe "#thread_variables" do
+      it "return keys" do
+        t1 = LightIO::Thread.new {}
+        t1.thread_variable_set(:name, 1)
+        t1.thread_variable_set(:hello, true)
+        expect(t1.thread_variables).to be == [:name, :hello]
+      end
     end
   end
 end
