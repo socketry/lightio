@@ -117,6 +117,16 @@ RSpec.describe LightIO::Thread do
       t = LightIO::Thread.current
       expect(t).to be == LightIO::Thread.main
     end
+
+    it "play with beams" do
+      t = LightIO::Thread.new {LightIO::Timeout.timeout(1) {LightIO::Thread.current}}
+      expect(t).to be == t.value
+    end
+
+    it "play with fiber" do
+      t = LightIO::Thread.new {Fiber.new {LightIO::Thread.current}.resume}
+      expect(t).to be == t.value
+    end
   end
 
   describe "#exclusive" do

@@ -20,6 +20,9 @@ module LightIO::Core
     # special class for simulate Thread#raise for Beam
     class BeamError
       attr_reader :error, :parent
+      extend Forwardable
+
+      def_delegators :@error, :message, :backtrace
 
       def initialize(error)
         @error = error

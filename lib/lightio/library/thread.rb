@@ -34,6 +34,7 @@ module LightIO::Library
   class Thread
     RAW_THREAD = ::Thread
     ThreadError = ::ThreadError
+    @current_thread = nil
 
     module FallbackHelper
       module ClassMethods
@@ -86,14 +87,8 @@ module LightIO::Library
       end
 
       def current
-        beam_of_fiber = LightIO::Beam.current
-        thr = beam_of_fiber.instance_variable_get(:@lightio_thread)
-        return thr if thr
-        return main if LightIO::Core::LightFiber.is_root?(beam_of_fiber)
-        raise LightIO::Error, "Can't find current thread from fiber #{beam_of_fiber.inspect},"\
-                              "current Thread implementation can't find Thread from Fiber or Beam execution scope,"\
-                              "please open issues on https://github.com/socketry/lightio/issues"\
-                              " if you really need this feature"
+        return main if LightIO::Core::LightFiber.is_root?(Fiber.current)
+        @current_thread || RAW_THREAD.current
       end
 
       def exclusive(&blk)
@@ -241,8 +236,8 @@ module LightIO::Library
     private
     def init_core(*args, &blk)
       @beam = LightIO::Beam.new(*args, &blk)
-      @beam.instance_variable_set(:@lightio_thread, self)
       @beam.on_dead = proc {on_dead}
+      @beam.on_transfer = proc {|from, to| on_transfer(from, to)}
       # register this thread
       thread_values
       # add self to ThreadGroup::Default
@@ -269,6 +264,10 @@ module LightIO::Library
       remove_from_group
     end
 
+    def on_transfer(from, to)
+      Thread.instance_variable_set(:@current_thread, self)
+    end
+
     def thread_values
       Thread.send(:threads)[object_id] ||= {}
     end
@@ -279,10 +278,8 @@ module LightIO::Library
 
     def fiber_values
       beam_or_fiber = LightIO::Beam.current
-      # ignore LightIO::Thread fiber, Beam fiber, root fiber
-      if beam_or_fiber.is_a?(LightIO::Beam) ||
-        beam_or_fiber.instance_variable_defined?(:@lightio_thread) ||
-        LightIO::Core::LightFiber.is_root?(beam_or_fiber)
+      # only consider non-root fiber
+      if !beam_or_fiber.instance_of?(::Fiber) || LightIO::LightFiber.is_root?(beam_or_fiber)
         beam_or_fiber = @beam
       end
       fibers_and_values[beam_or_fiber] ||= {}

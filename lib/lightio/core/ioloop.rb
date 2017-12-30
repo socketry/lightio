@@ -46,7 +46,7 @@ module LightIO::Core
       response_id, err = future.value
       current_beam = LightIO::Core::Beam.current
       if response_id != id
-        raise InvalidTransferError, "expect #{id}, but get #{result}"
+        raise LightIO::InvalidTransferError, "expect #{id}, but get #{response_id}"
       elsif err
         # if future return a err
         # simulate Thread#raise to Beam , that we can shutdown beam blocking by socket accepting
