@@ -1,4 +1,5 @@
 require_relative 'library/queue'
+require_relative 'library/sized_queue'
 require_relative 'library/kernel_ext'
 require_relative 'library/timeout'
 require_relative 'library/io'

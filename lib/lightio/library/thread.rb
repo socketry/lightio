@@ -1,5 +1,6 @@
 require 'thread'
 require_relative 'mutex'
+require_relative 'queue'
 
 module LightIO::Library
   class ThreadGroup
@@ -33,7 +34,14 @@ module LightIO::Library
 
   class Thread
     RAW_THREAD = ::Thread
+
+    # constants
     ThreadError = ::ThreadError
+    Queue = LightIO::Library::Queue
+    Backtrace = ::Thread::Backtrace
+    Mutex = ::LightIO::Library::Mutex
+    SizedQueue = LightIO::Library::SizedQueue
+
     @current_thread = nil
 
     module FallbackHelper
