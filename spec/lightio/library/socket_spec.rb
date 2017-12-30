@@ -183,13 +183,26 @@ RSpec.describe LightIO::Library::Socket do
     end
   end
 
-  describe LightIO::Library::Addrinfo do
-    it '#bind return wrapped socket' do
-      addrinfo = LightIO::Library::Addrinfo.tcp("127.0.0.1", 0)
-      expect(addrinfo).to be_kind_of(LightIO::Library::Addrinfo)
-      socket = addrinfo.bind
-      expect(socket).to be_kind_of(LightIO::Library::Socket)
-      socket.close
+  describe LightIO::Library::Socket::Ifaddr do
+    it '#getifaddrs' do
+      ifaddrs = LightIO::Library::Socket.getifaddrs
+      ifaddrs.each do |ifaddr|
+        [:addr, :broadaddr, :dstaddr, :netmask].each do |m|
+          result = ifaddr.send(m)
+          next if result.nil?
+          expect(result).to be_kind_of(LightIO::Library::Addrinfo)
+        end
+      end
     end
+  end
+end
+
+RSpec.describe LightIO::Library::Addrinfo do
+  it '#bind return wrapped socket' do
+    addrinfo = LightIO::Library::Addrinfo.tcp("127.0.0.1", 0)
+    expect(addrinfo).to be_kind_of(LightIO::Library::Addrinfo)
+    socket = addrinfo.bind
+    expect(socket).to be_kind_of(LightIO::Library::Socket)
+    socket.close
   end
 end

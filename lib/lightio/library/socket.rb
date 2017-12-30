@@ -99,12 +99,39 @@ module LightIO::Library
       @io.sys_accept
     end
 
-    # bind addr?
+    Option = ::Socket::Option
+    UDPSource = ::Socket::UDPSource
+    SocketError = ::Socket::SocketError
+
+    class Ifaddr
+      include LightIO::Wrap::Wrapper
+      wrap ::Socket
+
+      def addr
+        @io.addr && Addrinfo._wrap(@io.addr)
+      end
+
+      def broadaddr
+        @io.broadaddr && Addrinfo._wrap(@io.broadaddr)
+      end
+
+      def dstaddr
+        @io.dstaddr && Addrinfo._wrap(@io.dstaddr)
+      end
+
+      def netmask
+        @io.netmask && Addrinfo._wrap(@io.netmask)
+      end
+    end
 
     class << self
       ## implement ::Socket class methods
-      wrap_methods_run_in_threads_pool :getaddrinfo, :gethostbyaddr, :gethostbyname, :gethostname, :getifaddrs,
+      wrap_methods_run_in_threads_pool :getaddrinfo, :gethostbyaddr, :gethostbyname, :gethostname,
                                        :getnameinfo, :getservbyname
+
+      def getifaddrs
+        raw_class.getifaddrs.map {|ifaddr| Ifaddr._wrap(ifaddr)}
+      end
 
       def socketpair(domain, type, protocol)
         raw_class.socketpair(domain, type, protocol).map {|s| _wrap(s)}
