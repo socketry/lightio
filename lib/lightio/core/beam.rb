@@ -113,7 +113,11 @@ module LightIO::Core
     # Fiber not provide raise method, so we have to simulate one
     # @param [BeamError]  error currently only support raise BeamError
     def raise(error, message=nil, backtrace=nil)
-      super unless error.is_a?(BeamError)
+      unless error.is_a?(BeamError)
+        message ||= error.respond_to?(:message) ? error.message : nil
+        backtrace ||= error.respond_to?(:backtrace) ? error.backtrace : nil
+        super(error, message, backtrace)
+      end
       self.parent = error.parent if error.parent
       if Beam.current == self
         raise(error.error, message, backtrace)
