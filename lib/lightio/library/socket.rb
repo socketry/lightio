@@ -65,8 +65,10 @@ module LightIO::Library
   class BasicSocket < IO
     include LightIO::Wrap::IOWrapper
     wrap ::BasicSocket
-
     wrap_blocking_methods :recv, :recvmsg, :sendmsg
+
+    extend Forwardable
+    def_delegators :@io_watcher, :wait, :wait_writable
 
     def shutdown(*args)
       # close watcher before io shutdown
@@ -101,7 +103,7 @@ module LightIO::Library
 
     Option = ::Socket::Option
     UDPSource = ::Socket::UDPSource
-    SocketError = ::Socket::SocketError
+    SocketError = ::SocketError
 
     class Ifaddr
       include LightIO::Wrap::Wrapper

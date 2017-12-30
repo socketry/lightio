@@ -5,9 +5,9 @@ RSpec.describe LightIO::Library::IO do
     it "#wait_readable" do
       r1, w1 = LightIO::Library::IO.pipe
       r2, w2 = LightIO::Library::IO.pipe
-      b1 = LightIO::Beam.new {r1.wait_readable; r1.gets}
-      b2 = LightIO::Beam.new {r2.wait_readable; r2.gets}
-      b1.join(0.0001); b2.join(0.0001)
+      b1 = LightIO::Beam.new {r1.gets}
+      b2 = LightIO::Beam.new {r2.gets}
+      b1.join(0.01); b2.join(0.01)
       w1.puts "foo "
       w2.puts "bar"
       expect(b1.value + b2.value).to be == "foo \nbar\n"
@@ -133,6 +133,14 @@ RSpec.describe LightIO::Library::IO do
         w.close
         expect(r.read) == "hello\nworld\n"
       end
+
+      it 'read eof' do
+        r, w = pipe
+        t1 = LightIO::Beam.new {r.read}
+        t2 = LightIO::Beam.new {w.close}
+        t1.join; t2.join
+        expect(t1.value).to be == ''
+      end
     end
 
     context 'length is positive' do
@@ -167,6 +175,14 @@ RSpec.describe LightIO::Library::IO do
         w.write "world"
         w.close
         expect(r.read(10)) == "helloworld"
+      end
+
+      it 'read eof' do
+        r, w = pipe
+        t1 = LightIO::Beam.new {r.read(1)}
+        t2 = LightIO::Beam.new {w.close}
+        t1.join; t2.join
+        expect(t1.value).to be_nil
       end
     end
 
@@ -212,6 +228,221 @@ RSpec.describe LightIO::Library::IO do
         w.close
         expect(r.readpartial(4096)) == "hello world"
       end
+    end
+  end
+
+  describe "#getbyte" do
+    let(:pipe) {LightIO::Library::IO.pipe}
+    after {pipe.each(&:close) rescue nil}
+
+    it 'read byte' do
+      r, w = pipe
+      t1 = LightIO::Beam.new {r.getbyte}
+      t2 = LightIO::Beam.new {w.putc('n')}
+      t1.join; t2.join
+      expect(t1.value).to be == 'n'
+    end
+
+    it 'read eof' do
+      r, w = pipe
+      t1 = LightIO::Beam.new {r.getbyte}
+      t2 = LightIO::Beam.new {w.close}
+      t1.join; t2.join
+      expect(t1.value).to be_nil
+    end
+  end
+
+  describe "#getchar" do
+    let(:pipe) {LightIO::Library::IO.pipe}
+    after {pipe.each(&:close) rescue nil}
+
+    it 'read char' do
+      r, w = pipe
+      t1 = LightIO::Beam.new {r.getc}
+      t2 = LightIO::Beam.new {w.putc('光')}
+      t1.join; t2.join
+      expect(t1.value).to be == '光'
+    end
+
+    it 'read eof' do
+      r, w = pipe
+      t1 = LightIO::Beam.new {r.getbyte}
+      t2 = LightIO::Beam.new {w.close}
+      t1.join; t2.join
+      expect(t1.value).to be_nil
+    end
+  end
+
+  describe "#eof?" do
+    let(:pipe) {LightIO::Library::IO.pipe}
+    after {pipe.each(&:close) rescue nil}
+
+    it 'block until eof' do
+      r, w = pipe
+      t1 = LightIO::Beam.new {r.eof?}
+      expect(t1.join(0.001)).to be_nil
+      w.close
+      expect(t1.value).to be_truthy
+    end
+
+    it 'block until readable' do
+      r, w = pipe
+      t1 = LightIO::Beam.new {r.eof?}
+      expect(t1.join(0.001)).to be_nil
+      w << 'ok'
+      expect(t1.value).to be_falsey
+    end
+
+    it 'read eof' do
+      r, w = pipe
+      w.close
+      expect(r.eof?).to be_truthy
+    end
+  end
+
+  describe "#gets" do
+    let(:pipe) {LightIO::Library::IO.pipe}
+    after {pipe.each(&:close) rescue nil}
+
+    context 'gets' do
+      it 'gets' do
+        r, w = pipe
+        w << "hello"
+        t1 = LightIO::Beam.new {r.gets}
+        expect(t1.join(0.001)).to be_nil
+        w.write($/)
+        expect(t1.value).to be == "hello\n"
+      end
+
+      it 'get all' do
+        r, w = pipe
+        w << "hello"
+        t1 = LightIO::Beam.new {r.gets(nil)}
+        expect(t1.join(0.001)).to be_nil
+        w.write($/)
+        expect(t1.join(0.001)).to be_nil
+        w.close
+        expect(t1.value).to be == "hello\n"
+      end
+
+      it 'read eof end' do
+        r, w = pipe
+        w << "hello"
+        t1 = LightIO::Beam.new {r.gets}
+        expect(t1.join(0.001)).to be_nil
+        w.close
+        expect(t1.value).to be == "hello"
+      end
+
+      it 'read eof' do
+        r, w = pipe
+        w.close
+        t1 = LightIO::Beam.new {r.gets}
+        expect(t1.value).to be_nil
+      end
+
+      it 'end with another char' do
+        r, w = pipe
+        w << 'hello'
+        t1 = LightIO::Beam.new {r.gets('o')}
+        expect(t1.value).to be == 'hello'
+      end
+    end
+
+    context 'gets limit' do
+      it 'non block' do
+        r, w = pipe
+        w << 'hello'
+        expect(r.gets(3)).to be == 'hel'
+      end
+
+      it 'block' do
+        r, w = pipe
+        w << 'he'
+        t1 = LightIO::Beam.new {r.gets(3)}
+        expect(t1.join(0.001)).to be_nil
+        w << 'l'
+        expect(t1.value).to be == 'hel'
+      end
+
+      it 'sep' do
+        r, w = pipe
+        w.puts "he"
+        t1 = LightIO::Beam.new {r.gets(5)}
+        expect(t1.value).to be == "he\n"
+      end
+    end
+  end
+
+  describe "#readline" do
+    let(:pipe) {LightIO::Library::IO.pipe}
+    after {pipe.each(&:close) rescue nil}
+
+    it 'EOFError' do
+      r, w = pipe
+      w.close
+      t1 = LightIO::Beam.new {r.readline}
+      expect {t1.value}.to raise_error EOFError
+    end
+  end
+
+  describe "#readchar" do
+    let(:pipe) {LightIO::Library::IO.pipe}
+    after {pipe.each(&:close) rescue nil}
+
+    it 'EOFError' do
+      r, w = pipe
+      w.close
+      t1 = LightIO::Beam.new {r.readchar}
+      expect {t1.value}.to raise_error EOFError
+    end
+  end
+
+  describe "#readlines" do
+    let(:pipe) {LightIO::Library::IO.pipe}
+    after {pipe.each(&:close) rescue nil}
+
+    it 'readlines' do
+      r, w = pipe
+      w.puts "hello"
+      w.puts "world"
+      w.close
+      t1 = LightIO::Beam.new {r.readlines}
+      expect(t1.value).to be == ["hello\n", "world\n"]
+    end
+
+    it 'block' do
+      r, w = pipe
+      w.puts "hello"
+      w.puts "world"
+      t1 = LightIO::Beam.new {r.readlines}
+      expect(t1.join(0.001)).to be_nil
+      w.close
+    end
+
+    it 'eof' do
+      r, w = pipe
+      w.close
+      t1 = LightIO::Beam.new {r.readlines}
+      expect(t1.value).to be == []
+    end
+
+    it 'read all' do
+      r, w = pipe
+      w.puts "hello"
+      w.puts "world"
+      w.close
+      t1 = LightIO::Beam.new {r.readlines(nil)}
+      expect(t1.value).to be == ["hello\nworld\n"]
+    end
+
+    it 'limit' do
+      r, w = pipe
+      w.puts "hello"
+      w.puts "world"
+      w.close
+      t1 = LightIO::Beam.new {r.readlines(3)}
+      expect(t1.value).to be == ["hel", "lo\n", "wor", "ld\n"]
     end
   end
 end

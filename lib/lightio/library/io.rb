@@ -4,9 +4,6 @@ module LightIO::Library
     include LightIO::Wrap::IOWrapper
     wrap ::IO
 
-    extend Forwardable
-    def_delegators :@io_watcher, :wait, :wait_readable, :wait_writable
-
     wrap_blocking_methods :read, :write, exception_symbol: false
 
     alias_method :<<, :write
@@ -22,7 +19,7 @@ module LightIO::Library
             return outbuf
           end
         rescue EOFError
-          return outbuf
+          return length.nil? ? '' : nil
         end
       end
     end
@@ -33,6 +30,67 @@ module LightIO::Library
       outbuf
     end
 
+    def getbyte
+      read(1)
+    end
+
+    def getc
+      wait_readable
+      @io.getc
+    end
+
+    def readline(*args)
+      line = gets(*args)
+      raise EOFError, 'end of file reached' if line.nil?
+      line
+    end
+
+    def readlines(*args)
+      result = []
+      until eof?
+        result << readline(*args)
+      end
+      result
+    end
+
+    def readchar
+      c = getc
+      raise EOFError, 'end of file reached' if c.nil?
+      c
+    end
+
+    def readbyte
+      b = getbyte
+      raise EOFError, 'end of file reached' if b.nil?
+      b
+    end
+
+    def eof
+      wait_readable
+      @io.eof?
+    end
+
+    alias eof? eof
+
+    def gets(*args)
+      raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 0..2)" if args.size > 2
+      return nil if eof?
+      sep = $/
+      if args[0].is_a?(Numeric)
+        limit = args.shift
+      else
+        sep = args.shift if args.size > 0
+        limit = args.shift if args.first.is_a?(Numeric)
+      end
+      s = ''
+      while (c = getc)
+        s << c
+        break if limit && s.size == limit
+        break if c == sep
+      end
+      $_ = s
+    end
+
     def close(*args)
       # close watcher before io closed
       @io_watcher.close
@@ -41,6 +99,19 @@ module LightIO::Library
 
     def to_io
       self
+    end
+
+    private
+    def wait_readable
+      # if IO is already readable, continue wait_readable may block it forever
+      # so use getbyte detect this situation
+      # Maybe move getc and gets to thread pool is a good idea
+      b = getbyte
+      if b
+        ungetbyte(b)
+        return
+      end
+      @io_watcher.wait_readable
     end
 
     class << self

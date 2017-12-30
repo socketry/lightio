@@ -5,6 +5,8 @@ module LightIO::Core
   # IOloop handle io waiting and schedule beams, user do not supposed to directly use this class
   class IOloop
 
+    RAW_THREAD = ::Thread
+
     def initialize
       @fiber = Fiber.new {run}
       @backend = Backend::NIO.new
@@ -66,10 +68,10 @@ module LightIO::Core
       # return current ioloop or create new one
       def current
         key = :"lightio.ioloop"
-        unless Thread.current.thread_variable?(key)
-          Thread.current.thread_variable_set(key, IOloop.new)
+        unless RAW_THREAD.current.thread_variable?(key)
+          RAW_THREAD.current.thread_variable_set(key, IOloop.new)
         end
-        Thread.current.thread_variable_get(key)
+        RAW_THREAD.current.thread_variable_get(key)
       end
     end
   end

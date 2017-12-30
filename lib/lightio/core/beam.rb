@@ -1,3 +1,5 @@
+require 'forwardable'
+
 module LightIO::Core
   # Beam is light-weight executor, provide thread-like interface
   #
