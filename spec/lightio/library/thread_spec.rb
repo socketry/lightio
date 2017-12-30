@@ -61,6 +61,13 @@ RSpec.describe LightIO::Thread do
       expect(LightIO::Thread.kill(t)).to be == t
       expect(t.alive?).to be_falsey
     end
+
+    it "kill it multi times" do
+      t = LightIO::Thread.new {}
+      expect(t.alive?).to be_truthy
+      expect(t.kill).to be == t
+      expect(t.kill).to be == t
+    end
   end
 
   describe "#status" do
@@ -215,6 +222,12 @@ RSpec.describe LightIO::Thread do
       result << 2
       t.run
       expect(result).to be == [1, 2, 3]
+    end
+
+    it 'wakeup dead thread' do
+      thr = LightIO::Thread.new {}
+      thr.kill
+      expect {thr.wakeup}.to raise_error(ThreadError)
     end
   end
 

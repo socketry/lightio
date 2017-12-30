@@ -4,6 +4,7 @@ require_relative 'library/timeout'
 require_relative 'library/io'
 require_relative 'library/socket'
 require_relative 'library/thread'
+require_relative 'library/threads_wait'
 
 module LightIO
   # Library include modules can cooperative with LightIO::Beam

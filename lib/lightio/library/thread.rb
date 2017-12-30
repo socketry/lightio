@@ -33,7 +33,7 @@ module LightIO::Library
 
   class Thread
     RAW_THREAD = ::Thread
-
+    ThreadError = ::ThreadError
 
     module FallbackHelper
       module ClassMethods
@@ -228,6 +228,7 @@ module LightIO::Library
     end
 
     def run
+      Kernel.raise ThreadError, 'killed thread' unless alive?
       Thread.pass
     end
 
@@ -269,7 +270,6 @@ module LightIO::Library
     end
 
     def thread_values
-      raise ThreadError unless alive?
       Thread.send(:threads)[object_id] ||= {}
     end
 

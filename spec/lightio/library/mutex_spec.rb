@@ -20,7 +20,7 @@ RSpec.describe LightIO::Mutex do
       thr.wakeup
       expect(result).to be == []
       m.unlock
-      thr.wakeup
+      thr.join
       expect(result).to be == [1]
     end
   end
