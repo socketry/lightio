@@ -30,12 +30,19 @@ RSpec.describe LightIO::Thread do
       expect(result).to be == ["hello"]
     end
 
-    # it "return self if timeout" do
-    #   t = LightIO::Thread.new do
-    #     LightIO.sleep(1)
-    #   end
-    #   expect(t.join(0.00001)).to be == t
-    # end
+    it "return nil if timeout" do
+      t = LightIO::Thread.new do
+        LightIO.sleep(1)
+      end
+      expect(t.join(0.00001)).to be_nil
+    end
+
+    it "return self if not timeout" do
+      t = LightIO::Thread.new do
+        LightIO.sleep(0.0001)
+      end
+      expect(t.join(0.001)).to be == t
+    end
   end
 
   describe "#exit kill terminate" do

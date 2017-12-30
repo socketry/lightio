@@ -1,4 +1,5 @@
 require 'thread'
+require_relative 'mutex'
 
 module LightIO::Library
   class ThreadGroup
@@ -95,10 +96,8 @@ module LightIO::Library
                               " if you really need this feature"
       end
 
-      # TODO implement
-      def exclusive
-        raise "not implement"
-        yield
+      def exclusive(&blk)
+        @thread_mutex.synchronize(&blk)
       end
 
       def list
@@ -149,6 +148,7 @@ module LightIO::Library
       init_core(*args, &blk)
     end
 
+    @thread_mutex = LightIO::Library::Mutex.new
     def_delegators :@beam, :alive?, :value
 
     fallback_main_thread_methods :abort_on_exception,
