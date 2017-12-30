@@ -119,7 +119,7 @@ RSpec.describe LightIO::Thread do
     end
 
     it "play with beams" do
-      t = LightIO::Thread.new {LightIO::Timeout.timeout(1) {LightIO::Thread.current}}
+      t = LightIO::Thread.new {LightIO::Timeout.timeout(0.01) {LightIO::Thread.current}}
       expect(t).to be == t.value
     end
 
