@@ -39,8 +39,11 @@ module LightIO::Library
     def synchronize
       raise ThreadError, 'must be called with a block' unless block_given?
       lock
-      yield
-      unlock
+      begin
+        yield
+      ensure
+        unlock
+      end
     end
 
     def try_lock
