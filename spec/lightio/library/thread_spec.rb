@@ -270,3 +270,52 @@ RSpec.describe LightIO::Thread do
     end
   end
 end
+
+RSpec.describe LightIO::ThreadGroup do
+  describe "#list" do
+    it "should have more threads than native" do
+      expect(Set.new(LightIO::ThreadGroup::Default.list)).to be > Set.new(ThreadGroup::Default.list)
+    end
+
+    it "removed if thread dead" do
+      thr = LightIO::Thread.new {}
+      thr_group = LightIO::ThreadGroup.new
+      thr_group.add(thr)
+      expect(thr_group.list).to be == [thr]
+      thr.kill
+      expect(thr_group.list).to be == []
+      expect(thr.group).to be == thr_group
+    end
+  end
+
+  describe "#add" do
+    it "add to another group" do
+      thr = LightIO::Thread.new {}
+      expect(thr.group).to be == LightIO::ThreadGroup::Default
+      thr_group = LightIO::ThreadGroup.new
+      thr_group.add(thr)
+      expect(LightIO::ThreadGroup::Default.list.include?(thr)).to be_falsey
+      expect(thr_group.list).to be == [thr]
+    end
+
+    it "play with native Thread" do
+      thr = LightIO::Thread.main
+      thr_group = LightIO::ThreadGroup.new
+      thr_group.add(thr)
+      expect(LightIO::ThreadGroup::Default.list.include?(thr)).to be_falsey
+      expect(thr_group.list).to be == [thr]
+      LightIO::ThreadGroup::Default.add(thr)
+    end
+
+    it "#enclose" do
+      thr = LightIO::Thread.new {}
+      expect(thr.group).to be == LightIO::ThreadGroup::Default
+      thr_group = LightIO::ThreadGroup.new
+      thr_group.enclose
+      expect(thr_group.enclosed?).to be_truthy
+      expect {thr_group.add(thr)}.to raise_error(ThreadError)
+      expect(LightIO::ThreadGroup::Default.list.include?(thr)).to be_truthy
+      expect(thr_group.list).to be == []
+    end
+  end
+end

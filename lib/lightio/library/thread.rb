@@ -1,4 +1,35 @@
+require 'thread'
+
 module LightIO::Library
+  class ThreadGroup
+    include LightIO::Wrap::Wrapper
+    wrap ::ThreadGroup
+
+    Default = ThreadGroup._wrap(::ThreadGroup::Default)
+
+    def add(thread)
+      if @io.enclosed?
+        raise ThreadError, "can't move from the enclosed thread group"
+      elsif thread.is_a?(LightIO::Library::Thread)
+        # let thread decide how to add to group
+        thread.send(:add_to_group, self)
+      else
+        @io.add(thread)
+      end
+      self
+    end
+
+    def list
+      @io.list + threads
+    end
+
+    private
+    def threads
+      @threads ||= []
+    end
+  end
+
+
   class Thread
     RAW_THREAD = ::Thread
 
@@ -133,8 +164,6 @@ module LightIO::Library
 
     def kill
       @beam.kill && self
-    ensure
-      Thread.send(:threads).delete(object_id)
     end
 
     alias exit kill
@@ -174,9 +203,8 @@ module LightIO::Library
       fiber_values[name.to_sym] = val
     end
 
-    #TODO
     def group
-
+      @group
     end
 
     def inspect
@@ -213,10 +241,31 @@ module LightIO::Library
     def init_core(*args, &blk)
       @beam = LightIO::Beam.new(*args, &blk)
       @beam.instance_variable_set(:@lightio_thread, self)
+      @beam.on_dead = proc {on_dead}
       # register this thread
       thread_values
+      # add self to ThreadGroup::Default
+      add_to_group(ThreadGroup::Default)
       # remove thread and thread variables
       ObjectSpace.define_finalizer(self, self.class.finalizer(self.object_id))
+    end
+
+    # add self to thread group
+    def add_to_group(group)
+      # remove from old group
+      remove_from_group
+      @group = group
+      @group.send(:threads) << self
+    end
+
+    # remove thread from group when dead
+    def remove_from_group
+      @group.send(:threads).delete(self) if @group
+    end
+
+    def on_dead
+      # release references
+      remove_from_group
     end
 
     def thread_values

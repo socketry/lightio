@@ -28,6 +28,7 @@ module LightIO::Core
     end
 
     attr_reader :error
+    attr_accessor :on_dead
 
     # Create a new beam
     #
@@ -136,6 +137,7 @@ module LightIO::Core
     # mark beam as dead
     def dead
       @alive = false
+      on_dead.call(self) if on_dead
     end
 
     # Beam transfer back to parent after schedule
