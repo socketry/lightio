@@ -39,7 +39,6 @@ module LightIO::Library
     ThreadError = ::ThreadError
     Queue = LightIO::Library::Queue
     Backtrace = ::Thread::Backtrace
-    Mutex = ::LightIO::Library::Mutex
     SizedQueue = LightIO::Library::SizedQueue
 
     @current_thread = nil
