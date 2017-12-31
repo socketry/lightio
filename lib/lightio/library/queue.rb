@@ -27,10 +27,10 @@ module LightIO::Library
     # Pushes the given +object+ to the queue.
     def push(object)
       raise ClosedQueueError, "queue closed" if @close
-      if @waiters.any?
+      if (waiter = @waiters.shift)
         future = LightIO::Future.new
         LightIO::IOloop.current.add_callback {
-          @waiters.shift.transfer(object)
+          waiter.transfer(object)
           future.transfer
         }
         future.value
