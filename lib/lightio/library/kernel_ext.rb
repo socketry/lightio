@@ -7,8 +7,8 @@ module LightIO::Library
         LightIO::IOloop.current.transfer
       end
       duration = duration[0]
-      if duration.zero? && LightIO::Beam.current.respond_to?(:pass)
-        LightIO::Beam.current.pass
+      if duration.zero?
+        LightIO::Beam.pass
         return
       end
       timer = LightIO::Watchers::Timer.new duration
