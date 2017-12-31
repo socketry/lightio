@@ -136,7 +136,7 @@ module LightIO::Library
       end
 
       def select(read_fds, write_fds=nil, _except_fds=nil, timeout=nil)
-        timer = 0
+        timer = timeout && Time.now
         # run once ioloop
         LightIO.sleep 0
         loop do
@@ -144,10 +144,8 @@ module LightIO::Library
           w_fds = (write_fds || []).select {|fd| fd.closed? ? raise(IOError, 'closed stream') : fd.instance_variable_get(:@io_watcher).writable?}
           e_fds = []
           if r_fds.empty? && w_fds.empty?
-            interval = 0.1
-            LightIO.sleep interval
-            timer += interval
-            if timeout && timer > timeout
+            LightIO.sleep 0
+            if timeout && Time.now - timer > timeout
               return nil
             end
           else
