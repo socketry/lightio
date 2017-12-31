@@ -121,7 +121,10 @@ module LightIO::Core
       end
 
       def run_callbacks
-        while (callback = @callbacks.shift)
+        # prevent 'add new callbacks' during callback call, new callbacks will run in next turn
+        callbacks = @callbacks
+        @callbacks = []
+        while (callback = callbacks.shift)
           callback.call
         end
       end
