@@ -55,7 +55,7 @@ module LightIO::Core
         @running = false
         @timers = Timers.new
         @callbacks = []
-        @selector = ::NIO::Selector.new
+        @selector = ::NIO::Selector.new(env_backend)
       end
 
       def run
@@ -96,6 +96,15 @@ module LightIO::Core
         return unless @running
         @running = false
         raise
+      end
+
+      def backend
+        @selector.backend
+      end
+
+      def env_backend
+        key = 'LIGHTIO_BACKEND'.freeze
+        ENV.has_key?(key) ? ENV[key].to_sym : nil
       end
 
       private

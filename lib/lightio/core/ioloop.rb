@@ -1,4 +1,6 @@
 require 'lightio/core/backend/nio'
+require 'forwardable'
+
 module LightIO::Core
   # IOloop like a per-threaded EventMachine (cause fiber cannot resume cross threads)
   #
@@ -12,27 +14,8 @@ module LightIO::Core
       @backend = Backend::NIO.new
     end
 
-    # should never invoke explicitly
-    def run
-      # start io loop and never return...
-      @backend.run
-    end
-
-    def add_timer(timer)
-      @backend.add_timer(timer)
-    end
-
-    def add_callback(&blk)
-      @backend.add_callback(&blk)
-    end
-
-    def add_io_wait(io, interests, &blk)
-      @backend.add_io_wait(io, interests, &blk)
-    end
-
-    def cancel_io_wait(io)
-      @backend.cancel_io_wait(io)
-    end
+    extend Forwardable
+    def_delegators :@backend, :run, :add_timer, :add_callback, :add_io_wait, :cancel_io_wait, :backend
 
     # Wait a watcher, watcher can be a timer or socket.
     # see LightIO::Watchers module for detail
