@@ -21,10 +21,15 @@ module LightIO::Watchers
       @io = io
       @ioloop = LightIO::Core::IOloop.current
       @waiting = false
-      # NIO monitor
-      @monitor = @ioloop.add_io_wait(@io, interests) {callback_on_waiting}
       ObjectSpace.define_finalizer(self, self.class.finalizer(@monitor))
       @error = nil
+    end
+
+    # NIO::Monitor
+    def monitor(interests=:rw)
+      @monitor ||= begin
+        @ioloop.add_io_wait(@io, interests) {callback_on_waiting}
+      end
     end
 
     class << self
@@ -34,8 +39,19 @@ module LightIO::Watchers
     end
 
     extend Forwardable
-    def_delegators :@monitor, :interests, :interests=, :closed?, :readable?, :writable?, :writeable?
+    def_delegators :monitor, :interests, :interests=, :closed?
 
+    def readable?
+      check_monitor_read
+      monitor.readable?
+    end
+
+    def writable?
+      check_monitor_write
+      monitor.writable?
+    end
+
+    alias :writeable? :writable?
 
     # Blocking until io is readable
     # @param [Numeric]  timeout return nil after timeout seconds, otherwise return self
@@ -53,9 +69,10 @@ module LightIO::Watchers
 
     def wait(timeout=nil, mode=:read)
       LightIO::Timeout.timeout(timeout) do
-        interests = {read: :r, write: :w, read_write: :rw}[mode]
-        self.interests = interests
-        wait_in_ioloop
+        check_monitor(mode)
+        in_waiting(mode) do
+          wait_in_ioloop
+        end
         self
       end
     rescue Timeout::Error
@@ -64,7 +81,7 @@ module LightIO::Watchers
 
     def close
       return if closed?
-      @monitor.close
+      monitor.close
       @error = IOError.new('closed stream')
       callback_on_waiting
     end
@@ -80,34 +97,70 @@ module LightIO::Watchers
     end
 
     private
+    def check_monitor(mode)
+      case mode
+        when :read
+          check_monitor_read
+        when :write
+          check_monitor_write
+        when :read_write
+          check_monitor_read_write
+        else
+          raise ArgumentError, "get unknown value #{mode}"
+      end
+    end
+
+    def check_monitor_read
+      if monitor(:r).interests == :w
+        monitor.interests = :rw
+      end
+    end
+
+    def check_monitor_write
+      if monitor(:w).interests == :r
+        monitor.interests = :rw
+      end
+    end
+
+    def check_monitor_read_write
+      if monitor(:rw).interests != :rw
+        monitor.interests = :rw
+      end
+    end
 
     # Blocking until io interests is satisfied
     def wait_in_ioloop
       raise LightIO::Error, "Watchers::IO can't cross threads" if @ioloop != LightIO::Core::IOloop.current
       raise EOFError, "can't wait closed IO watcher" if @monitor.closed?
-      @waiting = true
       @ioloop.wait(self)
+    end
+
+    def in_waiting(mode)
+      @waiting = mode
+      yield
       @waiting = false
     end
 
     def callback_on_waiting
       # only call callback on waiting
-      return unless @waiting && io_is_ready?
+      return unless io_is_ready?
       if @error
         # if error occurred in io waiting, send it to callback, see IOloop#wait
-        callback.call(LightIO::Core::Beam::BeamError.new(@error))
+        callback&.call(LightIO::Core::Beam::BeamError.new(@error))
       else
-        callback.call
+        callback&.call
       end
     end
 
     def io_is_ready?
-      if interests == :r
+      return false unless @waiting
+      return true if closed?
+      if @waiting == :r
         readable?
-      elsif interests == :w
-        writeable?
+      elsif @waiting == :w
+        writable?
       else
-        readable? || writeable?
+        readable? || writable?
       end
     end
   end
