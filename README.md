@@ -38,7 +38,7 @@ Or install it yourself as:
 The following documentations is also usable:
 
 * [Basic usage](https://github.com/socketry/lightio/wiki/Basic-Usage)
-* [YARD documentation](http://www.rubydoc.info/gems/lightio/frames)
+* [YARD documentation](http://www.rubydoc.info/github/socketry/lightio/master)
 * [Examples](/examples)
 
 ## Discussion
