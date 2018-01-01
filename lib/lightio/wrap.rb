@@ -85,26 +85,16 @@ module LightIO::Wrap
     #
     # @param [Symbol]  method method name, example: wait_nonblock
     # @param [args] args arguments pass to method
-    def wait_nonblock(method, *args, exception_symbol: true)
+    def wait_nonblock(method, *args)
       loop do
-        begin
-          result = if RUBY_VERSION > "2.3" && exception_symbol
-                     @io.__send__(method, *args, exception: false)
-                   else
-                     @io.__send__(method, *args)
-                   end
-          case result
-            when :wait_readable
-              @io_watcher.wait_readable
-            when :wait_writable
-              @io_watcher.wait_writable
-            else
-              return result
-          end
-        rescue RAW_IO::WaitReadable
-          @io_watcher.wait_readable
-        rescue RAW_IO::WaitWritable
-          @io_watcher.wait_writable
+        result = @io.__send__(method, *args, exception: false)
+        case result
+          when :wait_readable
+            @io_watcher.wait_readable
+          when :wait_writable
+            @io_watcher.wait_writable
+          else
+            return result
         end
       end
     end
@@ -115,14 +105,14 @@ module LightIO::Wrap
       # wrap blocking method with "#{method}_nonblock"
       #
       # @param [Symbol]  method method name, example: wait
-      def wrap_blocking_method(method, exception_symbol: true)
+      def wrap_blocking_method(method)
         define_method method do |*args|
-          wait_nonblock(:"#{method}_nonblock", *args, exception_symbol: exception_symbol)
+          wait_nonblock(:"#{method}_nonblock", *args)
         end
       end
 
-      def wrap_blocking_methods(*methods, exception_symbol: true)
-        methods.each {|m| wrap_blocking_method(m, exception_symbol: exception_symbol)}
+      def wrap_blocking_methods(*methods)
+        methods.each {|m| wrap_blocking_method(m)}
       end
     end
 

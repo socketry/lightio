@@ -4,7 +4,7 @@ module LightIO::Library
     include LightIO::Wrap::IOWrapper
     wrap ::IO
 
-    wrap_blocking_methods :read, :write, exception_symbol: false
+    wrap_blocking_methods :read, :write
 
     alias_method :<<, :write
 
@@ -13,12 +13,12 @@ module LightIO::Library
       (outbuf ||= "").clear
       loop do
         readlen = length.nil? ? 4096 : length - outbuf.size
-        begin
-          outbuf << wait_nonblock(:read_nonblock, readlen, exception_symbol: false)
+        if (data = wait_nonblock(:read_nonblock, readlen))
+          outbuf << data
           if length == outbuf.size
             return outbuf
           end
-        rescue EOFError
+        else
           return length.nil? ? '' : nil
         end
       end
@@ -26,7 +26,11 @@ module LightIO::Library
 
     def readpartial(maxlen, outbuf=nil)
       (outbuf ||= "").clear
-      outbuf << wait_nonblock(:read_nonblock, maxlen, exception_symbol: false)
+      if (data = wait_nonblock(:read_nonblock, maxlen))
+        outbuf << data
+      else
+        raise EOFError, 'end of file reached'
+      end
       outbuf
     end
 
