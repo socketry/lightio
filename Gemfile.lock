@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    lightio (0.2.2)
+    lightio (0.3.0)
       nio4r (~> 2.2)
 
 GEM
