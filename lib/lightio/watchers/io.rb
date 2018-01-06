@@ -23,6 +23,8 @@ module LightIO::Watchers
       @waiting = false
       ObjectSpace.define_finalizer(self, self.class.finalizer(@monitor))
       @error = nil
+      # maintain socket status, see https://github.com/socketry/lightio/issues/1
+      @readiness = nil
     end
 
     # NIO::Monitor
@@ -41,17 +43,25 @@ module LightIO::Watchers
     extend Forwardable
     def_delegators :monitor, :interests, :interests=, :closed?
 
+    # this method return previous IO.select status
+    # should avoid to directly use
     def readable?
       check_monitor_read
-      monitor.readable?
+      @readiness == :r || @readiness == :rw
     end
 
+    # this method return previous IO.select status
+    # should avoid to directly use
     def writable?
       check_monitor_write
-      monitor.writable?
+      @readiness == :w || @readiness == :rw
     end
 
     alias :writeable? :writable?
+
+    def clear_status
+      @readiness = nil
+    end
 
     # Blocking until io is readable
     # @param [Numeric]  timeout return nil after timeout seconds, otherwise return self
@@ -142,6 +152,8 @@ module LightIO::Watchers
     end
 
     def callback_on_waiting
+      # update readiness on callback
+      @readiness = monitor.readiness
       # only call callback on waiting
       return unless io_is_ready?
       if @error

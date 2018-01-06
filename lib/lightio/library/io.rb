@@ -118,6 +118,10 @@ module LightIO::Library
       @io_watcher.wait_readable
     end
 
+    def io_watcher
+      @io_watcher
+    end
+
     class << self
       def open(*args)
         io = self.new(*args)
@@ -141,14 +145,16 @@ module LightIO::Library
 
       def select(read_fds, write_fds=nil, _except_fds=nil, timeout=nil)
         timer = timeout && Time.now
-        # run once ioloop
-        LightIO.sleep 0
         loop do
-          r_fds = (read_fds || []).select {|fd| fd.closed? ? raise(IOError, 'closed stream') : fd.instance_variable_get(:@io_watcher).readable?}
-          w_fds = (write_fds || []).select {|fd| fd.closed? ? raise(IOError, 'closed stream') : fd.instance_variable_get(:@io_watcher).writable?}
+          # clear io watcher status
+          read_fds.each {|fd| fd.send(:io_watcher).clear_status}
+          write_fds.each {|fd| fd.send(:io_watcher).clear_status}
+          # run ioloop once
+          LightIO.sleep 0
+          r_fds = (read_fds || []).select {|fd| fd.closed? ? raise(IOError, 'closed stream') : fd.send(:io_watcher).readable?}
+          w_fds = (write_fds || []).select {|fd| fd.closed? ? raise(IOError, 'closed stream') : fd.send(:io_watcher).writable?}
           e_fds = []
           if r_fds.empty? && w_fds.empty?
-            LightIO.sleep 0
             if timeout && Time.now - timer > timeout
               return nil
             end
