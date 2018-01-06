@@ -1,6 +1,7 @@
 # use nio4r implement event loop, inspired from eventmachine/pure_ruby implement
 require 'nio'
 require 'set'
+require 'forwardable'
 module LightIO::Core
   module Backend
 
@@ -49,6 +50,9 @@ module LightIO::Core
 
     # LightIO use NIO as default event-driving backend
     class NIO
+      extend Forwardable
+      def_delegators :@selector, :closed?, :empty?, :backend, :wakeup
+
       def initialize
         # @selector = NIO::Selector.new
         @current_loop_time = nil
@@ -93,14 +97,12 @@ module LightIO::Core
       end
 
       def stop
-        return unless @running
+        return if closed?
         @running = false
-        raise
+        @selector.close
       end
 
-      def backend
-        @selector.backend
-      end
+      alias close stop
 
       def env_backend
         key = 'LIGHTIO_BACKEND'.freeze
