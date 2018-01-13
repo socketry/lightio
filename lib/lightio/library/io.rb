@@ -125,9 +125,12 @@ module LightIO::Library
     class << self
       def open(*args)
         io = self.new(*args)
-        yield io
-      ensure
-        io.close if io.respond_to? :close
+        return io unless block_given?
+        begin
+          yield io
+        ensure
+          io.close if io.respond_to? :close
+        end
       end
 
       def pipe(*args)

@@ -445,4 +445,22 @@ RSpec.describe LightIO::Library::IO do
       expect(t1.value).to be == ["hel", "lo\n", "wor", "ld\n"]
     end
   end
+
+  describe '#open' do
+    it 'with block' do
+      stdout = nil
+      IO.open(1) do |io|
+        stdout = io
+        expect(io.to_i).to be == STDOUT.to_i
+      end
+      expect(stdout.closed?).to be_truthy
+    end
+
+    it 'without block' do
+      io = IO.open(1)
+      expect(io.to_i).to be == STDOUT.to_i
+      expect(io.closed?).to be_falsey
+      io.close
+    end
+  end
 end
