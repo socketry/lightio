@@ -118,10 +118,6 @@ module LightIO::Library
       @io_watcher.wait_readable
     end
 
-    def io_watcher
-      @io_watcher
-    end
-
     class << self
       def open(*args)
         io = self.new(*args)
@@ -152,15 +148,17 @@ module LightIO::Library
         write_fds ||= []
         loop do
           # clear io watcher status
-          read_fds.each {|fd| fd.instance_variable_get(:@io_watcher).clear_status}
-          write_fds.each {|fd| fd.instance_variable_get(:@io_watcher).clear_status}
+          read_fds.each {|fd| get_io_watcher(fd).clear_status}
+          write_fds.each {|fd| get_io_watcher(fd).clear_status}
           # run ioloop once
           LightIO.sleep 0
           r_fds = read_fds.select {|fd|
-            fd.closed? ? raise(IOError, 'closed stream') : fd.instance_variable_get(:@io_watcher).readable?
+            io = convert_to_io(fd)
+            io.closed? ? raise(IOError, 'closed stream') : get_io_watcher(io).readable?
           }
           w_fds = write_fds.select {|fd|
-            fd.closed? ? raise(IOError, 'closed stream') : fd.instance_variable_get(:@io_watcher).writable?
+            io = convert_to_io(fd)
+            io.closed? ? raise(IOError, 'closed stream') : get_io_watcher(io).writable?
           }
           e_fds = []
           if r_fds.empty? && w_fds.empty?
@@ -171,6 +169,25 @@ module LightIO::Library
             return [r_fds, w_fds, e_fds]
           end
         end
+      end
+
+      private
+      def convert_to_io(io)
+        unless io.respond_to?(:to_io)
+          raise TypeError, "no implicit conversion of #{io.class} into IO"
+        end
+        to_io = io.to_io
+        unless to_io.is_a?(IO)
+          raise TypeError, "can't convert #{io.class} to IO (#{io.class}#to_io gives #{to_io.class})"
+        end
+        to_io
+      end
+
+      def get_io_watcher(io)
+        unless io.is_a?(IO)
+          io = convert_to_io(io)
+        end
+        io.instance_variable_get(:@io_watcher)
       end
     end
   end

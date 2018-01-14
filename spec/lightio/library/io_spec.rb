@@ -89,6 +89,54 @@ RSpec.describe LightIO::Library::IO do
       r.close
       w.close
     end
+
+    context 'implicit conversion' do
+
+      class A_TO_IO
+        attr_reader :to_io
+
+        def initialize(io)
+          @to_io = io
+        end
+      end
+
+      class B_TO_IO
+        def to_io
+          1
+        end
+      end
+
+      it 'should convert implicitly' do
+        r1, w1 = LightIO::Library::IO.pipe
+        a_r1, a_w1 = A_TO_IO.new(r1), A_TO_IO.new(w1)
+        r2, w2 = LightIO::Library::IO.pipe
+        a_r2, a_w2 = A_TO_IO.new(r2), A_TO_IO.new(w2)
+        LightIO.sleep 0.1
+        read_fds, write_fds = LightIO::Library::IO.select([a_r1, a_r2], [a_w1, a_w2])
+        expect(read_fds).to be == []
+        expect(write_fds).to be == [a_w1, a_w2]
+        w1.close
+        LightIO.sleep 0.1
+        read_fds, write_fds = LightIO::Library::IO.select([a_r1, a_r2], [a_w2])
+        expect(read_fds).to be == [a_r1]
+        expect(write_fds).to be == [a_w2]
+        r1.close
+        r2.close
+        w2.close
+      end
+
+      it 'raise error if no #to_io method' do
+        expect {
+          LightIO::Library::IO.select([1], nil)
+        }.to raise_error(TypeError, 'no implicit conversion of Integer into IO')
+      end
+
+      it 'raise error if #to_io return not IO' do
+        expect {
+          LightIO::Library::IO.select([B_TO_IO.new], nil)
+        }.to raise_error(TypeError, 'can\'t convert B_TO_IO to IO (B_TO_IO#to_io gives Integer)')
+      end
+    end
   end
 
   describe "#read" do
