@@ -152,12 +152,16 @@ module LightIO::Library
         write_fds ||= []
         loop do
           # clear io watcher status
-          read_fds.each {|fd| fd.send(:io_watcher).clear_status}
-          write_fds.each {|fd| fd.send(:io_watcher).clear_status}
+          read_fds.each {|fd| fd.instance_variable_get(:@io_watcher).clear_status}
+          write_fds.each {|fd| fd.instance_variable_get(:@io_watcher).clear_status}
           # run ioloop once
           LightIO.sleep 0
-          r_fds = read_fds.select {|fd| fd.closed? ? raise(IOError, 'closed stream') : fd.send(:io_watcher).readable?}
-          w_fds = write_fds.select {|fd| fd.closed? ? raise(IOError, 'closed stream') : fd.send(:io_watcher).writable?}
+          r_fds = read_fds.select {|fd|
+            fd.closed? ? raise(IOError, 'closed stream') : fd.instance_variable_get(:@io_watcher).readable?
+          }
+          w_fds = write_fds.select {|fd|
+            fd.closed? ? raise(IOError, 'closed stream') : fd.instance_variable_get(:@io_watcher).writable?
+          }
           e_fds = []
           if r_fds.empty? && w_fds.empty?
             if timeout && Time.now - timer > timeout
