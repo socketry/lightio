@@ -51,13 +51,6 @@ module LightIO::Library
             obj.public_send method, *args
           end
         end
-
-        def fallback_thread_class_methods(*methods)
-          methods.each {|m| fallback_method(RAW_THREAD.main, m, "This method is fallback to native Thread class,"\
-                                                   " it may cause unexpected behaviour,"\
-                                                   " open issues on https://github.com/socketry/lightio/issues"\
-                                                   " if this behaviour not approach you purpose")}
-        end
       end
 
       include ClassMethods
@@ -76,10 +69,15 @@ module LightIO::Library
 
     class << self
       extend Forwardable
-      def_delegators :'LightIO::Library::Thread::RAW_THREAD', :DEBUG, :DEBUG=
+      def_delegators :'LightIO::Library::Thread::RAW_THREAD',
+                     :DEBUG,
+                     :DEBUG=,
+                     :handle_interrupt,
+                     :abort_on_exception,
+                     :abort_on_exception=,
+                     :pending_interrupt?
 
       include FallbackHelper
-      fallback_thread_class_methods :abort_on_exception, :abort_on_exception=
 
       def fork(*args, &blk)
         obj = allocate
@@ -155,8 +153,7 @@ module LightIO::Library
 
     fallback_main_thread_methods :abort_on_exception,
                                  :abort_on_exception=,
-                                 :handle_interrupt,
-                                 :pending_interrupt,
+                                 :pending_interrupt?,
                                  :add_trace_func,
                                  :backtrace,
                                  :backtrace_locations,

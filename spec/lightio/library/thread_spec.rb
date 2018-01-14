@@ -104,6 +104,7 @@ RSpec.describe LightIO::Thread do
   describe "#abort_on_exception" do
     it "not nil" do
       expect(LightIO::Thread.abort_on_exception).to_not be_nil
+      expect(LightIO::Thread.main.abort_on_exception).to_not be_nil
     end
   end
 
