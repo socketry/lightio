@@ -49,7 +49,7 @@ module LightIO::Core
       super() {
         begin
           @value = yield(*args)
-        rescue StandardError => e
+        rescue Exception => e
           @error = e
         end
         # mark as dead
