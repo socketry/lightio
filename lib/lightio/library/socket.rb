@@ -96,6 +96,11 @@ module LightIO::Library
       [self.class._wrap(socket), Addrinfo._wrap(addrinfo)]
     end
 
+    def accept_nonblock(*args)
+      socket, addrinfo = @io.accept_nonblock(*args)
+      [self.class._wrap(socket), Addrinfo._wrap(addrinfo)]
+    end
+
     def sys_accept
       @io_watcher.wait_readable
       @io.sys_accept
@@ -178,6 +183,11 @@ module LightIO::Library
     ## implement ::Socket instance methods
     def accept
       socket = wait_nonblock(:accept_nonblock)
+      TCPSocket._wrap(socket)
+    end
+
+    def accept_nonblock(*args)
+      socket = @io.accept_nonblock(*args)
       TCPSocket._wrap(socket)
     end
 
