@@ -84,4 +84,95 @@ RSpec.describe LightIO::Mutex do
       expect(m.try_lock).to be_falsey
     end
   end
+
+  describe LightIO::ConditionVariable do
+    it '#wait & #signal' do
+      mutex = LightIO::Mutex.new
+      resource = LightIO::ConditionVariable.new
+
+      sum = 0
+
+      a = LightIO::Thread.new {
+        mutex.synchronize {
+          resource.wait(mutex)
+          sum *= 2
+        }
+      }
+
+      b = LightIO::Thread.new {
+        mutex.synchronize {
+          sum =+ 20
+          resource.signal
+        }
+      }
+
+      a.join
+      b.run if a.alive?
+      expect(sum).to be == 40
+    end
+
+    it '#signal' do
+      mutex = LightIO::Mutex.new
+      resource = LightIO::ConditionVariable.new
+
+      # not effected
+      resource.signal
+      resource.signal
+      resource.signal
+
+      sum = 0
+
+      a = LightIO::Thread.new {
+        mutex.synchronize {
+          resource.wait(mutex)
+          sum *= 2
+        }
+      }
+
+      b = LightIO::Thread.new {
+        mutex.synchronize {
+          sum =+ 20
+          resource.signal
+        }
+      }
+
+      a.join
+      b.run if b.alive?
+      expect(sum).to be == 40
+    end
+
+
+    it '#boardcast' do
+      mutex = LightIO::Mutex.new
+      resource = LightIO::ConditionVariable.new
+
+      sum = 0
+
+      a = LightIO::Thread.new {
+        mutex.synchronize {
+          resource.wait(mutex)
+          sum *= 2
+        }
+      }
+
+      b = LightIO::Thread.new {
+        mutex.synchronize {
+          resource.wait(mutex)
+          sum *= 2
+        }
+      }
+
+      c = LightIO::Thread.new {
+        mutex.synchronize {
+          sum += 1
+          resource.broadcast
+        }
+      }
+
+      a.join
+      b.join if b.alive?
+      c.join if c.alive?
+      expect(sum).to be == 4
+    end
+  end
 end

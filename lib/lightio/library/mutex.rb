@@ -4,7 +4,7 @@ module LightIO::Library
   class Thread
     class Mutex
       def initialize
-        @queue = Queue.new
+        @queue = LightIO::Library::Queue.new
         @queue << true
         @locked_thread = nil
       end
@@ -56,7 +56,38 @@ module LightIO::Library
         end
       end
     end
+
+    class ConditionVariable
+      def initialize
+        @queue = LightIO::Library::Queue.new
+      end
+
+
+      def broadcast
+        signal until @queue.num_waiting == 0
+        self
+      end
+
+      def signal
+        @queue << true unless @queue.num_waiting == 0
+        self
+      end
+
+      def wait(mutex, timeout=nil)
+        mutex.unlock
+        begin
+          LightIO::Library::Timeout.timeout(timeout) do
+            @queue.pop
+          end
+        rescue Timeout::Error
+          nil
+        end
+        mutex.lock
+        self
+      end
+    end
   end
 
   Mutex = Thread::Mutex
+  ConditionVariable = Thread::ConditionVariable
 end
