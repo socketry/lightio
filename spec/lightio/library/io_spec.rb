@@ -128,13 +128,13 @@ RSpec.describe LightIO::Library::IO do
       it 'raise error if no #to_io method' do
         expect {
           LightIO::Library::IO.select([1], nil)
-        }.to raise_error(TypeError, 'no implicit conversion of Integer into IO')
+        }.to raise_error(TypeError, "no implicit conversion of #{1.class} into IO")
       end
 
       it 'raise error if #to_io return not IO' do
         expect {
           LightIO::Library::IO.select([B_TO_IO.new], nil)
-        }.to raise_error(TypeError, 'can\'t convert B_TO_IO to IO (B_TO_IO#to_io gives Integer)')
+        }.to raise_error(TypeError, "can't convert B_TO_IO to IO (B_TO_IO#to_io gives #{1.class})")
       end
     end
   end
