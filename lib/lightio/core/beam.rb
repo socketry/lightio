@@ -136,8 +136,11 @@ module LightIO::Core
       #
       # @return [nil]
       def pass
+        running = IOloop.current.running
         schedule = LightIO::Watchers::Schedule.new
         IOloop.current.wait(schedule)
+        # make sure ioloop run once
+        pass unless running
       end
     end
 

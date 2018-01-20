@@ -90,6 +90,15 @@ RSpec.describe LightIO::Library::IO do
       w.close
     end
 
+    it 'immediately return readable fd' do
+      r1, w1 = LightIO::Library::IO.pipe
+      w1.close
+      read_fds, write_fds = LightIO::Library::IO.select([r1], nil, nil, 0)
+      expect(read_fds).to be == [r1]
+      expect(write_fds).to be == []
+      r1.close
+    end
+
     context 'implicit conversion' do
 
       class A_TO_IO

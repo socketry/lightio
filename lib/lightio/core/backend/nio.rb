@@ -53,6 +53,8 @@ module LightIO::Core
       extend Forwardable
       def_delegators :@selector, :closed?, :empty?, :backend, :wakeup
 
+      attr_reader :running
+
       def initialize
         # @selector = NIO::Selector.new
         @current_loop_time = nil

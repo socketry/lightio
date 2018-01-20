@@ -147,9 +147,9 @@ module LightIO::Library
         read_fds ||= []
         write_fds ||= []
         loop do
-          # clear io watcher status
-          read_fds.each {|fd| get_io_watcher(fd).clear_status}
-          write_fds.each {|fd| get_io_watcher(fd).clear_status}
+          # make sure io registered, then clear io watcher status
+          read_fds.each {|fd| get_io_watcher(fd).tap {|io| io.readable?; io.clear_status}}
+          write_fds.each {|fd| get_io_watcher(fd).tap {|io| io.writable?; io.clear_status}}
           # run ioloop once
           LightIO.sleep 0
           r_fds = read_fds.select {|fd|

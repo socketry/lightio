@@ -15,7 +15,8 @@ module LightIO::Core
     end
 
     extend Forwardable
-    def_delegators :@backend, :run, :add_timer, :add_callback, :add_io_wait, :cancel_io_wait, :backend, :close, :closed?, :stop
+    def_delegators :@backend, :run, :add_timer, :add_callback, :add_io_wait, :cancel_io_wait, :backend,
+                   :close, :closed?, :stop, :running
 
     # Wait a watcher, watcher can be a timer or socket.
     # see LightIO::Watchers module for detail
