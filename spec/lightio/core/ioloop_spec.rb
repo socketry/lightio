@@ -19,6 +19,7 @@ RSpec.describe LightIO::IOloop do
         LightIO::IOloop.current.close
         result << LightIO::IOloop.current.closed?
       }
+      t.join
       expect(result).to eql [false, true]
     end
 
