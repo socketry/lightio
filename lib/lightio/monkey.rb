@@ -44,7 +44,7 @@ module LightIO
       end
 
       def patch_kernel!
-        patch_method!(Kernel, :sleep, LightIO::Library::KernelExt.method(:sleep))
+        patch_method!(Kernel, :sleep, LightIO.method(:sleep))
         patch_method!(Kernel, :select, LightIO::Library::IO.method(:select))
       end
 

@@ -1,6 +1,8 @@
 require 'forwardable'
 module LightIO::Library
   class IO
+    RAW_IO = ::IO
+
     include LightIO::Wrap::IOWrapper
     wrap ::IO
 
@@ -178,6 +180,7 @@ module LightIO::Library
         end
         to_io = io.to_io
         unless to_io.is_a?(IO)
+          raise TypeError, "can't process raw IO, use LightIO::IO._wrap(obj) to wrap it" if to_io.is_a?(RAW_IO)
           raise TypeError, "can't convert #{io.class} to IO (#{io.class}#to_io gives #{to_io.class})"
         end
         to_io

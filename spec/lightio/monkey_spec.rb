@@ -65,5 +65,19 @@ RSpec.describe LightIO::Monkey do
       expect(LightIO::Monkey.get_origin(IO)).to be_nil
       expect(LightIO::Monkey.get_origin(Thread)).to be_nil
     end
+
+    it '#select patched' do
+      r, w = IO.pipe
+      w.close
+      expect {
+        read_fds, write_fds = select([r], nil, nil, 0)
+      }.to raise_error(TypeError, "can't process raw IO, use LightIO::IO._wrap(obj) to wrap it")
+    end
+
+    it '#sleep patched' do
+      start = Time.now
+      100.times.map {LightIO::Beam.new {sleep 0.1}}.each(&:join)
+      expect(Time.now - start).to be < 1
+    end
   end
 end
