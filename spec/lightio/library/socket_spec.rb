@@ -206,3 +206,21 @@ RSpec.describe LightIO::Library::Addrinfo do
     socket.close
   end
 end
+
+
+RSpec.describe LightIO::Library::UNIXServer do
+  it '#send_io' do
+    r, w = LightIO::Library::IO.pipe
+    s1, s2 = LightIO::Library::UNIXSocket.pair
+    p s1
+    s1.send_io w
+    out = s2.recv_io
+
+    expect(out.fileno).not_to eq(w.fileno)
+
+    out.puts "hello" # outputs "hello\n" to standard output.
+    out.close
+    expect(r.gets).to eq("hello\n")
+    r.close; w.close
+  end
+end

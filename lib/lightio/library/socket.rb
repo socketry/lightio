@@ -196,4 +196,57 @@ module LightIO::Library
       @io.sys_accept
     end
   end
+
+  class UDPSocket < IPSocket
+    include LightIO::Wrap::IOWrapper
+    wrap ::UDPSocket
+
+    wrap_blocking_methods :recvfrom
+  end
+
+  class UNIXSocket < BasicSocket
+    include LightIO::Wrap::IOWrapper
+    wrap ::UNIXSocket
+    class << self
+      def socketpair(*args)
+        raw_class.socketpair(*args).map {|io| UNIXSocket._wrap(io)}
+      end
+
+      alias_method :pair, :socketpair
+    end
+
+    def send_io(io)
+      io = io.instance_variable_get(:@io) unless io.is_a?(LightIO::Library::IO::RAW_IO)
+      @io.send_io(io)
+    end
+
+    def recv_io(*args)
+      io = @io.recv_io(*args)
+      if (wrapper = LightIO.const_get(io.class.to_s))
+        return wrapper._wrap(io) if wrapper.respond_to?(:_wrap)
+      end
+      io
+    end
+  end
+
+  class UNIXServer < UNIXSocket
+    include LightIO::Wrap::IOWrapper
+    wrap ::UNIXServer
+
+    ## implement ::Socket instance methods
+    def accept
+      socket = wait_nonblock(:accept_nonblock)
+      UNIXSocket._wrap(socket)
+    end
+
+    def accept_nonblock(*args)
+      socket = @io.accept_nonblock(*args)
+      UNIXSocket._wrap(socket)
+    end
+
+    def sys_accept
+      @io_watcher.wait_readable
+      @io.sys_accept
+    end
+  end
 end

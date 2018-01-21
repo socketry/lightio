@@ -3,7 +3,7 @@ module LightIO
     class PatchError < StandardError
     end
 
-    SOCKET_PATCH_CONSTANTS = %w{IO Socket TCPServer TCPSocket BasicSocket Addrinfo IPSocket}.freeze
+    SOCKET_PATCH_CONSTANTS = %w{IO Socket TCPServer TCPSocket BasicSocket Addrinfo IPSocket UDPSocket UNIXSocket UNIXServer}.freeze
     THREAD_PATCH_CONSTANTS = %w{Thread ThreadGroup Queue SizedQueue ConditionVariable Mutex ThreadsWait Timeout}.freeze
 
     class << self

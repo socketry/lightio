@@ -43,6 +43,9 @@ RSpec.describe LightIO::Monkey do
       expect(LightIO::Monkey.patched?(BasicSocket)).to be_truthy
       expect(LightIO::Monkey.patched?(Addrinfo)).to be_truthy
       expect(LightIO::Monkey.patched?(IPSocket)).to be_truthy
+      expect(LightIO::Monkey.patched?(UDPSocket)).to be_truthy
+      expect(LightIO::Monkey.patched?(UNIXSocket)).to be_truthy
+      expect(LightIO::Monkey.patched?(UNIXServer)).to be_truthy
     end
 
     it '#get_origin' do
