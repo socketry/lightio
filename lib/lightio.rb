@@ -5,6 +5,7 @@ require 'lightio/core'
 require 'lightio/watchers'
 require 'lightio/wrap'
 require 'lightio/library'
+require 'lightio/monkey'
 
 # LightIO provide light-weight executor: LightIO::Beam and batch io libraries,
 # view LightIO::Core::Beam to learn how to concurrent programming with Beam,
