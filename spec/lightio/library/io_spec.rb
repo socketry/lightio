@@ -18,7 +18,7 @@ RSpec.describe LightIO::Library::IO do
 
   describe "#write" do
     it "#wait works" do
-      r, w = IO.pipe
+      r, w = LightIO::Library::IO.pipe
       if RUBY_VERSION > '2.5.0'
         w.write "Hello", "IO"
       else

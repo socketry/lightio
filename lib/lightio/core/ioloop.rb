@@ -59,4 +59,7 @@ module LightIO::Core
       end
     end
   end
+
+  # Initialize IOloop
+  IOloop.current
 end

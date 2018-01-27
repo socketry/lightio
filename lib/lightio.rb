@@ -4,6 +4,7 @@ require 'lightio/errors'
 require 'lightio/core'
 require 'lightio/watchers'
 require 'lightio/wrap'
+require 'lightio/module'
 require 'lightio/library'
 require 'lightio/monkey'
 

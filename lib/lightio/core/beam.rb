@@ -45,7 +45,7 @@ module LightIO::Core
     # @param [Proc]  blk block to execute
     # @return [Beam]
     def initialize(*args, &blk)
-      raise Error, "must be called with a block" unless blk
+      raise LightIO::Error, "must be called with a block" unless blk
       super() {
         begin
           @value = yield(*args)

@@ -197,22 +197,11 @@ RSpec.describe LightIO::Library::Socket do
   end
 end
 
-RSpec.describe LightIO::Library::Addrinfo do
-  it '#bind return wrapped socket' do
-    addrinfo = LightIO::Library::Addrinfo.tcp("127.0.0.1", 0)
-    expect(addrinfo).to be_kind_of(LightIO::Library::Addrinfo)
-    socket = addrinfo.bind
-    expect(socket).to be_kind_of(LightIO::Library::Socket)
-    socket.close
-  end
-end
-
 
 RSpec.describe LightIO::Library::UNIXServer do
   it '#send_io' do
     r, w = LightIO::Library::IO.pipe
     s1, s2 = LightIO::Library::UNIXSocket.pair
-    p s1
     s1.send_io w
     out = s2.recv_io
 
