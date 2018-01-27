@@ -7,16 +7,16 @@ module LightIO
     THREAD_PATCH_CONSTANTS = %w{Thread ThreadGroup Queue SizedQueue ConditionVariable Mutex ThreadsWait Timeout}.freeze
 
     class << self
-      def patch_all!
-        patch_thread!
-        patch_socket!
-        patch_kernel!
+      def patch_all!(silence: true)
+        patch_thread!(silence: silence)
+        patch_socket!(silence: silence)
+        patch_kernel!(silence: silence)
       end
 
-      def unpatch_all!
-        unpatch_thread!
-        unpatch_socket!
-        unpatch_kernel!
+      def unpatch_all!(silence: true)
+        unpatch_thread!(silence: silence)
+        unpatch_socket!(silence: silence)
+        unpatch_kernel!(silence: silence)
       end
 
       def patched?(obj)
@@ -27,30 +27,42 @@ module LightIO
         patched[obj]
       end
 
-      def patch_thread!
-        THREAD_PATCH_CONSTANTS.each {|c| patch!(c)}
+      def patch_thread!(silence: true)
+        silence_warning(silence: silence) do
+          THREAD_PATCH_CONSTANTS.each {|c| patch!(c)}
+        end
       end
 
-      def unpatch_thread!
-        THREAD_PATCH_CONSTANTS.reverse.each {|c| unpatch!(c)}
+      def unpatch_thread!(silence: true)
+        silence_warning(silence: silence) do
+          THREAD_PATCH_CONSTANTS.reverse.each {|c| unpatch!(c)}
+        end
       end
 
-      def patch_socket!
-        SOCKET_PATCH_CONSTANTS.each {|c| patch!(c)}
+      def patch_socket!(silence: true)
+        silence_warning(silence: silence) do
+          SOCKET_PATCH_CONSTANTS.each {|c| patch!(c)}
+        end
       end
 
-      def unpatch_socket!
-        SOCKET_PATCH_CONSTANTS.reverse.each {|c| unpatch!(c)}
+      def unpatch_socket!(silence: true)
+        silence_warning(silence: silence) do
+          SOCKET_PATCH_CONSTANTS.reverse.each {|c| unpatch!(c)}
+        end
       end
 
-      def patch_kernel!
-        patch_method!(Kernel, :sleep, LightIO.method(:sleep))
-        patch_method!(Kernel, :select, LightIO::Library::IO.method(:select))
+      def patch_kernel!(silence: true)
+        silence_warning(silence: silence) do
+          patch_method!(Kernel, :sleep, LightIO.method(:sleep))
+          patch_method!(Kernel, :select, LightIO::Library::IO.method(:select))
+        end
       end
 
-      def unpatch_kernel!
-        unpatch_method!(Kernel, :sleep)
-        unpatch_method!(Kernel, :select)
+      def unpatch_kernel!(silence: true)
+        silence_warning(silence: silence) do
+          unpatch_method!(Kernel, :sleep)
+          unpatch_method!(Kernel, :select)
+        end
       end
 
       private
@@ -73,6 +85,15 @@ module LightIO
         patched.delete(const)
         nil
       end
+
+      def silence_warning(silence: true)
+        verbose = $VERBOSE
+        $VERBOSE = nil if silence
+        yield
+      ensure
+        $VERBOSE = verbose
+      end
+
 
       def const_set(name, obj)
         # find namespace, Thread::Queue
