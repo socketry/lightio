@@ -37,15 +37,15 @@ RSpec.describe LightIO::Mutex do
     end
   end
 
-  describe "#owner?" do
+  describe "#owned?" do
     it "correct" do
       m = LightIO::Mutex.new
       m.lock
       t = LightIO::Thread.new do
-        m.owner?
+        m.owned?
       end
       expect(t.value).to be_falsey
-      expect(m.owner?).to be_truthy
+      expect(m.owned?).to be_truthy
     end
   end
 

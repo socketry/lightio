@@ -10,14 +10,14 @@ module LightIO::Library
       end
 
       def lock
-        raise ThreadError, "deadlock; recursive locking" if owner?
+        raise ThreadError, "deadlock; recursive locking" if owned?
         @queue.pop
         @locked_thread = LightIO::Thread.current
         self
       end
 
       def unlock
-        raise ThreadError, "Attempt to unlock a mutex which is not locked" unless owner?
+        raise ThreadError, "Attempt to unlock a mutex which is not locked" unless owned?
         @locked_thread = nil
         @queue << true
         self
@@ -27,7 +27,7 @@ module LightIO::Library
         !@locked_thread.nil?
       end
 
-      def owner?
+      def owned?
         @locked_thread == LightIO::Thread.current
       end
 
