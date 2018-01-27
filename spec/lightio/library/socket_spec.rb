@@ -52,6 +52,7 @@ RSpec.describe LightIO::Library::Socket do
     let(:beam) {LightIO::Beam.new do
       LightIO::TCPServer.open(port) {|serv|
         s = serv.accept
+        expect(s).to be_a LightIO::Library::TCPSocket
         s.puts Date.today
         s.close
       }
@@ -88,6 +89,44 @@ RSpec.describe LightIO::Library::Socket do
       rescue Errno::EISCONN
         # mean connect is success before ruby 2.2.7 *_* en...
         nil
+      rescue Errno::ECONNREFUSED
+        beam.join(0.0001)
+        retry
+      end
+      beam.join(0.0001)
+      expect(client.gets).to be == "#{Date.today.to_s}\n"
+      client.close
+    end
+  end
+
+  describe "#accept_nonblock" do
+    let(:port) {pick_random_port}
+    let(:beam) {LightIO::Beam.new do
+      LightIO::TCPServer.open(port) {|serv|
+        expect(serv).to be_a LightIO::Library::TCPServer
+        LightIO::IO.select([serv])
+        s = serv.accept_nonblock
+        expect(s).to be_a LightIO::Library::TCPSocket
+        s.puts Date.today
+        s.close
+      }
+    end}
+
+    it "work with raw socket client" do
+      begin
+        client = TCPSocket.new 'localhost', port
+      rescue Errno::ECONNREFUSED
+        beam.join(0.0001)
+        retry
+      end
+      beam.join(0.0001)
+      expect(client.gets).to be == "#{Date.today.to_s}\n"
+      client.close
+    end
+
+    it "work with TCPSocket" do
+      begin
+        client = LightIO::Library::TCPSocket.new 'localhost', port
       rescue Errno::ECONNREFUSED
         beam.join(0.0001)
         retry

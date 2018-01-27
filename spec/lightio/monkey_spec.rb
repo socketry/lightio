@@ -52,6 +52,31 @@ RSpec.describe LightIO::Monkey do
       io_class = LightIO::Monkey.get_origin(IO)
       expect(io_class).to be == STDOUT.class
     end
+    describe "#accept_nonblock" do
+      let(:port) {pick_random_port}
+      let(:beam) {LightIO::Beam.new do
+        TCPServer.open(port) {|serv|
+          expect(serv).to be_a LightIO::Library::TCPServer
+          IO.select([serv])
+          s = serv.accept_nonblock
+          expect(s).to be_a LightIO::Library::TCPSocket
+          s.puts Date.today
+          s.close
+        }
+      end}
+
+      it "work with raw socket client" do
+        begin
+          client = TCPSocket.new 'localhost', port
+        rescue Errno::ECONNREFUSED
+          beam.join(0.0001)
+          retry
+        end
+        beam.join(0.0001)
+        expect(client.gets).to be == "#{Date.today.to_s}\n"
+        client.close
+      end
+    end
   end
 
   describe '#patch_kernel!' do

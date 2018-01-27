@@ -114,7 +114,11 @@ module LightIO::Library
 
     def accept_nonblock(*args)
       socket, addrinfo = @obj.accept_nonblock(*args)
-      [self.class._wrap(socket), Addrinfo._wrap(addrinfo)]
+      if socket.is_a?(Symbol)
+        [socket, nil]
+      else
+        [self.class._wrap(socket), Addrinfo._wrap(addrinfo)]
+      end
     end
 
     class << self
@@ -167,7 +171,7 @@ module LightIO::Library
 
     def accept_nonblock(*args)
       socket = @obj.accept_nonblock(*args)
-      socket.is_a?(::TCPSocket) ? TCPSocket._wrap(socket) : socket
+      socket.is_a?(Symbol) ? socket : TCPSocket._wrap(socket)
     end
   end
 
@@ -216,7 +220,7 @@ module LightIO::Library
 
     def accept_nonblock(*args)
       socket = @obj.accept_nonblock(*args)
-      UNIXSocket._wrap(socket)
+      socket.is_a?(Symbol) ? socket : UNIXSocket._wrap(socket)
     end
   end
 end
