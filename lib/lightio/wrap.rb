@@ -1,3 +1,6 @@
+# wrap module
+# wrap ruby objects, and make it work with lightio
+
 module LightIO::Wrap
   # wrapper for normal ruby objects
   module Wrapper
@@ -25,6 +28,7 @@ module LightIO::Wrap
     def initialize(*args)
       io = super
       @io_watcher ||= LightIO::Watchers::IO.new(io)
+      io
     end
 
     protected

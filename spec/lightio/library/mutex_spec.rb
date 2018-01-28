@@ -1,6 +1,22 @@
 require 'spec_helper'
 
 RSpec.describe LightIO::Mutex do
+  describe "act as Mutex" do
+    it "#is_a?" do
+      obj = LightIO::Library::Mutex.new
+      expect(obj).to be_a(LightIO::Library::Mutex)
+      expect(obj).to be_a(Mutex)
+      expect(obj).to be_kind_of(LightIO::Library::Mutex)
+      expect(obj).to be_kind_of(Mutex)
+    end
+
+    it "#instance_of?" do
+      obj = LightIO::Library::Mutex.new
+      expect(obj).to be_an_instance_of(LightIO::Library::Mutex)
+      expect(obj).to be_an_instance_of(Mutex)
+    end
+  end
+
   describe "#lock" do
     it "can't lock self" do
       m = LightIO::Mutex.new
@@ -86,6 +102,22 @@ RSpec.describe LightIO::Mutex do
   end
 
   describe LightIO::ConditionVariable do
+    describe "act as ConditionVariable" do
+      it "#is_a?" do
+        obj = LightIO::Library::ConditionVariable.new
+        expect(obj).to be_a(LightIO::Library::ConditionVariable)
+        expect(obj).to be_a(ConditionVariable)
+        expect(obj).to be_kind_of(LightIO::Library::ConditionVariable)
+        expect(obj).to be_kind_of(ConditionVariable)
+      end
+
+      it "#instance_of?" do
+        obj = LightIO::Library::ConditionVariable.new
+        expect(obj).to be_an_instance_of(LightIO::Library::ConditionVariable)
+        expect(obj).to be_an_instance_of(ConditionVariable)
+      end
+    end
+
     it '#wait & #signal' do
       mutex = LightIO::Mutex.new
       resource = LightIO::ConditionVariable.new
@@ -101,7 +133,7 @@ RSpec.describe LightIO::Mutex do
 
       b = LightIO::Thread.new {
         mutex.synchronize {
-          sum =+ 20
+          sum =+20
           resource.signal
         }
       }
@@ -131,7 +163,7 @@ RSpec.describe LightIO::Mutex do
 
       b = LightIO::Thread.new {
         mutex.synchronize {
-          sum =+ 20
+          sum =+20
           resource.signal
         }
       }

@@ -1,6 +1,22 @@
 require 'spec_helper'
 
 RSpec.describe LightIO::SizedQueue do
+  describe "act as SizedQueue" do
+    it "#is_a?" do
+      obj = LightIO::Library::SizedQueue.new(1)
+      expect(obj).to be_a(LightIO::Library::SizedQueue)
+      expect(obj).to be_a(Queue)
+      expect(obj).to be_kind_of(LightIO::Library::SizedQueue)
+      expect(obj).to be_kind_of(SizedQueue)
+    end
+
+    it "#instance_of?" do
+      obj = LightIO::Library::SizedQueue.new(1)
+      expect(obj).to be_an_instance_of(LightIO::Library::SizedQueue)
+      expect(obj).to be_an_instance_of(SizedQueue)
+    end
+  end
+
   describe "#new" do
     it "max must > 0" do
       expect {LightIO::SizedQueue.new(0)}.to raise_error ArgumentError

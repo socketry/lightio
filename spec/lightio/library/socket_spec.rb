@@ -116,10 +116,10 @@ RSpec.describe LightIO::Library::Socket do
       begin
         client = TCPSocket.new 'localhost', port
       rescue Errno::ECONNREFUSED
-        beam.join(0.0001)
+        beam.join(0.001)
         retry
       end
-      beam.join(0.0001)
+      beam.join(0.001)
       expect(client.gets).to be == "#{Date.today.to_s}\n"
       client.close
     end
@@ -236,6 +236,39 @@ RSpec.describe LightIO::Library::Socket do
   end
 end
 
+RSpec.describe LightIO::Library::TCPServer do
+  describe "act as TCPServer" do
+    it "#is_a?" do
+      LightIO::TCPServer.open(pick_random_port) {|serv|
+        obj = serv
+        expect(obj).to be_a(LightIO::Library::TCPServer)
+        expect(obj).to be_a(TCPServer)
+        expect(obj).to be_a(LightIO::Library::TCPSocket)
+        expect(obj).to be_a(TCPSocket)
+        expect(obj).to be_a(LightIO::Library::IPSocket)
+        expect(obj).to be_a(IPSocket)
+        expect(obj).to be_a(LightIO::Library::BasicSocket)
+        expect(obj).to be_a(BasicSocket)
+        expect(obj).to be_a(LightIO::Library::IO)
+        expect(obj).to be_a(IO)
+        expect(obj).to be_kind_of(LightIO::Library::TCPServer)
+        expect(obj).to be_kind_of(TCPServer)
+      }
+    end
+
+    it "#instance_of?" do
+      LightIO::TCPServer.open(pick_random_port) {|serv|
+        obj = serv
+        expect(obj).to_not be_an_instance_of(LightIO::Library::BasicSocket)
+        expect(obj).to_not be_an_instance_of(BasicSocket)
+        expect(obj).to_not be_an_instance_of(LightIO::Library::IO)
+        expect(obj).to_not be_an_instance_of(IO)
+        expect(obj).to be_an_instance_of(LightIO::Library::TCPServer)
+        expect(obj).to be_an_instance_of(TCPServer)
+      }
+    end
+  end
+end
 
 RSpec.describe LightIO::Library::UNIXServer do
   it '#send_io' do

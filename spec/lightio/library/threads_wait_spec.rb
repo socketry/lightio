@@ -1,6 +1,22 @@
 require 'spec_helper'
 
 RSpec.describe LightIO::ThreadsWait do
+  describe "act as ThreadsWait" do
+    it "#is_a?" do
+      obj = LightIO::Library::ThreadsWait.new
+      expect(obj).to be_a(LightIO::Library::ThreadsWait)
+      expect(obj).to be_a(ThreadsWait)
+      expect(obj).to be_kind_of(LightIO::Library::ThreadsWait)
+      expect(obj).to be_kind_of(ThreadsWait)
+    end
+
+    it "#instance_of?" do
+      obj = LightIO::Library::ThreadsWait.new {}
+      expect(obj).to be_an_instance_of(LightIO::Library::ThreadsWait)
+      expect(obj).to be_an_instance_of(ThreadsWait)
+    end
+  end
+
   describe "#all_waits" do
     it "wait all terminated" do
       threads = 5.times.map {LightIO::Thread.new {}}

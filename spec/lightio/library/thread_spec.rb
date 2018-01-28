@@ -1,6 +1,22 @@
 require 'spec_helper'
 
 RSpec.describe LightIO::Thread do
+  describe "act as Thread" do
+    it "#is_a?" do
+      obj = LightIO::Library::Thread.new {}
+      expect(obj).to be_a(LightIO::Library::Thread)
+      expect(obj).to be_a(Thread)
+      expect(obj).to be_kind_of(LightIO::Library::Thread)
+      expect(obj).to be_kind_of(Thread)
+    end
+
+    it "#instance_of?" do
+      obj = LightIO::Library::Thread.new {}
+      expect(obj).to be_an_instance_of(LightIO::Library::Thread)
+      expect(obj).to be_an_instance_of(Thread)
+    end
+  end
+
   describe "#new" do
     it "execute and return value" do
       t = LightIO::Thread.new do

@@ -1,123 +1,31 @@
 module LightIO::Module
   module IO
-    include LightIO::Module::Base
-    include LightIO::Wrap::IOWrapper
+    module ClassMethods
+      include LightIO::Module::Base::Helper
 
-    wrap_blocking_methods :read, :write
-
-    alias_method :<<, :write
-
-    def read(length=nil, outbuf=nil)
-      raise ArgumentError, "negative length #{length} given" if length && length < 0
-      (outbuf ||= "").clear
-      loop do
-        readlen = length.nil? ? 4096 : length - outbuf.size
-        if (data = wait_nonblock(:read_nonblock, readlen))
-          outbuf << data
-          if length == outbuf.size
-            return outbuf
-          end
-        else
-          return length.nil? ? outbuf : nil
+      def open(*args)
+        io = self.new(*args)
+        return io unless block_given?
+        begin
+          yield io
+        ensure
+          io.close if io.respond_to? :close
         end
       end
-    end
 
-    def readpartial(maxlen, outbuf=nil)
-      (outbuf ||= "").clear
-      if (data = wait_nonblock(:read_nonblock, maxlen))
-        outbuf << data
-      else
-        raise EOFError, 'end of file reached'
+      def pipe(*args)
+        r, w = mock_klass.pipe(*args)
+        if block_given?
+          begin
+            return yield r, w
+          ensure
+            w.close
+            r.close
+          end
+        end
+        [wrap_to_library(r), wrap_to_library(w)]
       end
-      outbuf
-    end
 
-    def getbyte
-      read(1)
-    end
-
-    def getc
-      wait_readable
-      super
-    end
-
-    def readline(*args)
-      line = gets(*args)
-      raise EOFError, 'end of file reached' if line.nil?
-      line
-    end
-
-    def readlines(*args)
-      result = []
-      until eof?
-        result << readline(*args)
-      end
-      result
-    end
-
-    def readchar
-      c = getc
-      raise EOFError, 'end of file reached' if c.nil?
-      c
-    end
-
-    def readbyte
-      b = getbyte
-      raise EOFError, 'end of file reached' if b.nil?
-      b
-    end
-
-    def eof
-      wait_readable
-      super
-    end
-
-    alias eof? eof
-
-    def gets(*args)
-      raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 0..2)" if args.size > 2
-      return nil if eof?
-      sep = $/
-      if args[0].is_a?(Numeric)
-        limit = args.shift
-      else
-        sep = args.shift if args.size > 0
-        limit = args.shift if args.first.is_a?(Numeric)
-      end
-      s = ''
-      while (c = getc)
-        s << c
-        break if limit && s.size == limit
-        break if c == sep
-      end
-      $_ = s
-    end
-
-    def to_io
-      self
-    end
-
-    def close(*args)
-      # close watcher before io closed
-      @io_watcher.close
-      super
-    end
-
-    private
-    def wait_readable
-      # if IO is already readable, continue wait_readable may block it forever
-      # so use getbyte detect this situation
-      # Maybe move getc and gets to thread pool is a good idea
-      b = getbyte
-      if b
-        ungetbyte(b)
-        return
-      end
-      @io_watcher.wait_readable
-    end
-
-    module ClassMethods
       def select(read_fds, write_fds=nil, _except_fds=nil, timeout=nil)
         timer = timeout && Time.now
         read_fds ||= []
@@ -153,7 +61,7 @@ module LightIO::Module
           raise TypeError, "no implicit conversion of #{io.class} into IO"
         end
         to_io = io.to_io
-        unless to_io.is_a?(IO)
+        unless to_io.is_a?(LightIO::Library::IO)
           raise TypeError, "can't process raw IO, use LightIO::IO._wrap(obj) to wrap it" if to_io.is_a?(::IO)
           raise TypeError, "can't convert #{io.class} to IO (#{io.class}#to_io gives #{to_io.class})"
         end
@@ -161,7 +69,7 @@ module LightIO::Module
       end
 
       def get_io_watcher(io)
-        unless io.is_a?(IO)
+        unless io.is_a?(LightIO::Library::IO)
           io = convert_to_io(io)
         end
         io.instance_variable_get(:@io_watcher)

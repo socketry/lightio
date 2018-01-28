@@ -1,15 +1,19 @@
 module LightIO::Module
   module Base
-    module ClassMethods
-      def prepended(mod)
-        if (class_methods_module = mod.const_get(:ClassMethods) rescue nil)
-          mod.singleton_class.prepend(class_methods_module)
-        end
+    module Helper
+      protected
+      def wrap_to_library(obj)
+        return _wrap(obj) if self.respond_to?(:_wrap)
+        find_library_class._wrap(obj)
       end
-    end
 
-    def self.included(base)
-      base.send :extend, ClassMethods
+      private
+      def find_library_class
+        name = self.name
+        s = name.rindex("::") + 2
+        class_name = name[s..-1]
+        LightIO::Library.const_get(class_name)
+      end
     end
   end
 end

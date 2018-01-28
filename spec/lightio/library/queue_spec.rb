@@ -1,6 +1,22 @@
 require 'spec_helper'
 
 RSpec.describe LightIO::Queue do
+  describe "act as Queue" do
+    it "#is_a?" do
+      obj = LightIO::Library::Queue.new
+      expect(obj).to be_a(LightIO::Library::Queue)
+      expect(obj).to be_a(Queue)
+      expect(obj).to be_kind_of(LightIO::Library::Queue)
+      expect(obj).to be_kind_of(Queue)
+    end
+
+    it "#instance_of?" do
+      obj = LightIO::Library::Queue.new
+      expect(obj).to be_an_instance_of(LightIO::Library::Queue)
+      expect(obj).to be_an_instance_of(Queue)
+    end
+  end
+
   describe "queue " do
     it "works" do
       q = LightIO::Queue.new

@@ -7,8 +7,6 @@ module LightIO::Core
   # IOloop handle io waiting and schedule beams, user do not supposed to directly use this class
   class IOloop
 
-    RAW_THREAD = ::Thread
-
     def initialize
       @fiber = Fiber.new {run}
       @backend = Backend::NIO.new
@@ -48,14 +46,19 @@ module LightIO::Core
       @fiber.transfer
     end
 
+    THREAD_PROXY = ::LightIO::RawProxy.new(::Thread,
+                                           methods: [:current],
+                                           instance_methods: [:thread_variable_get, :thread_variable_set, :thread_variable?])
+
     class << self
       # return current ioloop or create new one
       def current
         key = :"lightio.ioloop"
-        unless RAW_THREAD.current.thread_variable?(key)
-          RAW_THREAD.current.thread_variable_set(key, IOloop.new)
+        current_thread = THREAD_PROXY.send(:current)
+        unless THREAD_PROXY.instance_send(current_thread, :thread_variable?, key)
+          THREAD_PROXY.instance_send(current_thread, :thread_variable_set, key, IOloop.new)
         end
-        RAW_THREAD.current.thread_variable_get(key)
+        THREAD_PROXY.instance_send(current_thread, :thread_variable_get, key)
       end
     end
   end

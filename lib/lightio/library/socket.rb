@@ -7,78 +7,42 @@ module LightIO::Library
     include Base
     mock ::Addrinfo
 
-    module WrapperHelper
-      protected
-      def wrap_socket_method(method)
-        define_method method do |*args|
-          socket = Socket._wrap(@obj.send(method, *args))
-          if block_given?
-            begin
-              yield socket
-            ensure
-              socket.close
-            end
-          else
-            socket
-          end
-        end
-      end
-
-      def wrap_socket_methods(*methods)
-        methods.each {|m| wrap_socket_method(m)}
-      end
-
-      def wrap_addrinfo_return_method(method)
-        define_method method do |*args|
-          result = (@obj || mock_klass).send(method, *args)
-          if result.is_a?(mock_klass)
-            _wrap(result)
-          elsif result.respond_to?(:map)
-            result.map {|r| _wrap(r)}
-          else
-            result
-          end
-        end
-      end
-
-      def wrap_addrinfo_return_methods(*methods)
-        methods.each {|m| wrap_addrinfo_return_method(m)}
-      end
-    end
-
-    extend WrapperHelper
+    extend LightIO::Module::Addrinfo::WrapperHelper
 
     wrap_socket_methods :bind, :connect, :connect_from, :connect_to, :listen
-
     wrap_addrinfo_return_methods :family_addrinfo, :ipv6_to_ipv4
-
-    class << self
-      extend WrapperHelper
-
-      def foreach(*args, &block)
-        Addrinfo.getaddrinfo(*args).each(&block)
-      end
-
-      wrap_addrinfo_return_methods :getaddrinfo, :ip, :udp, :tcp, :unix
-    end
   end
 
   class BasicSocket < LightIO::Library::IO
     include Base
+    include LightIO::Wrap::IOWrapper
     mock ::BasicSocket
-    prepend LightIO::Module::BasicSocket
+    extend LightIO::Module::BasicSocket::ClassMethods
 
-    class << self
-      def for_fd(fd)
-        self._wrap(mock_klass.for_fd(fd))
-      end
+    wrap_blocking_methods :recv, :recvmsg, :sendmsg
+
+    extend Forwardable
+    def_delegators :@io_watcher, :wait, :wait_writable
+
+    def shutdown(*args)
+      # close watcher before io shutdown
+      @io_watcher.close
+      @obj.shutdown(*args)
     end
   end
 
   class Socket < BasicSocket
     include Base
+    include LightIO::Wrap::IOWrapper
     mock ::Socket
-    prepend LightIO::Module::Socket
+    extend LightIO::Module::Socket::ClassMethods
+
+    wrap_blocking_methods :connect, :recvfrom, :accept
+
+    def sys_accept
+      @io_watcher.wait_readable
+      @obj.sys_accept
+    end
 
     class Ifaddr
       include Base
@@ -120,49 +84,23 @@ module LightIO::Library
         [self.class._wrap(socket), Addrinfo._wrap(addrinfo)]
       end
     end
-
-    class << self
-      def getifaddrs
-        mock_klass.getifaddrs.map {|ifaddr| Ifaddr._wrap(ifaddr)}
-      end
-
-      def socketpair(domain, type, protocol)
-        mock_klass.socketpair(domain, type, protocol).map {|s| _wrap(s)}
-      end
-
-      alias_method :pair, :socketpair
-
-      def unix_server_socket(path)
-        if block_given?
-          mock_klass.unix_server_socket(path) {|s| yield _wrap(s)}
-        else
-          _wrap(mock_klass.unix_server_socket(path))
-        end
-      end
-
-      def ip_sockets_port0(ai_list, reuseaddr)
-        mock_klass.ip_sockets_port0(ai_list, reuseaddr).map {|s| _wrap(s)}
-      end
-    end
   end
 
 
   class IPSocket < BasicSocket
     include Base
     mock ::IPSocket
-    prepend LightIO::Module::IPSocket
   end
 
   class TCPSocket < IPSocket
     include Base
     mock ::TCPSocket
-    prepend LightIO::Module::TCPSocket
+    wrap_methods_run_in_threads_pool :gethostbyname
   end
 
   class TCPServer < TCPSocket
     include Base
     mock ::TCPServer
-    prepend LightIO::Module::TCPServer
 
     def accept
       socket = wait_nonblock(:accept_nonblock)
@@ -173,29 +111,26 @@ module LightIO::Library
       socket = @obj.accept_nonblock(*args)
       socket.is_a?(Symbol) ? socket : TCPSocket._wrap(socket)
     end
+
+    def sys_accept
+      @io_watcher.wait_readable
+      @obj.sys_accept
+    end
   end
 
   class UDPSocket < IPSocket
     include Base
     mock ::UDPSocket
-    prepend LightIO::Module::UDPSocket
+
+    wrap_blocking_methods :recvfrom
   end
 
   class UNIXSocket < ::BasicSocket
     include Base
     mock ::UNIXSocket
-    prepend LightIO::Module::UNIXSocket
-
-    class << self
-      def socketpair(*args)
-        mock_klass.socketpair(*args).map {|io| UNIXSocket._wrap(io)}
-      end
-
-      alias_method :pair, :socketpair
-    end
 
     def send_io(io)
-      io = io.instance_variable_get(:@obj) unless io.is_a?(::IO)
+      io = io.instance_variable_get(:@obj) || io
       @obj.send_io(io)
     end
 
@@ -211,7 +146,11 @@ module LightIO::Library
   class UNIXServer < UNIXSocket
     include Base
     mock ::UNIXServer
-    prepend LightIO::Module::UNIXServer
+
+    def sys_accept
+      @io_watcher.wait_readable
+      @obj.sys_accpet
+    end
 
     def accept
       socket = wait_nonblock(:accept_nonblock)

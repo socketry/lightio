@@ -1,6 +1,7 @@
 # LightIO
 require 'lightio/version'
 require 'lightio/errors'
+require 'lightio/raw_proxy'
 require 'lightio/core'
 require 'lightio/watchers'
 require 'lightio/wrap'

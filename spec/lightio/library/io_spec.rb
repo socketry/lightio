@@ -1,6 +1,24 @@
 require 'spec_helper'
 
 RSpec.describe LightIO::Library::IO do
+  describe "act as IO" do
+    it "#is_a?" do
+      io = LightIO::Library::IO.new(1)
+      expect(io).to be_a(LightIO::Library::IO)
+      expect(io).to be_a(IO)
+      expect(io).to be_kind_of(LightIO::Library::IO)
+      expect(io).to be_kind_of(IO)
+      io.close
+    end
+
+    it "#instance_of?" do
+      io = LightIO::Library::IO.new(1)
+      expect(io).to be_an_instance_of(LightIO::Library::IO)
+      expect(io).to be_an_instance_of(IO)
+      io.close
+    end
+  end
+
   describe "#wait methods" do
     it "#wait_readable" do
       r1, w1 = LightIO::Library::IO.pipe
