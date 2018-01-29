@@ -2,12 +2,8 @@ require 'spec_helper'
 
 RSpec.describe LightIO::Monkey do
   describe '#patch_thread!' do
-    before(:all) {LightIO::Monkey.patch_thread!}
-    after(:all) {LightIO::Monkey.unpatch_thread!}
-
     it '#patched?' do
       expect(LightIO::Monkey.patched?(LightIO)).to be_falsey
-      expect(LightIO::Monkey.patched?(IO)).to be_falsey
       expect(LightIO::Monkey.patched?(Thread)).to be_truthy
       expect(LightIO::Monkey.patched?(ThreadGroup)).to be_truthy
       expect(LightIO::Monkey.patched?(Thread::Mutex)).to be_truthy
@@ -23,19 +19,15 @@ RSpec.describe LightIO::Monkey do
       expect(LightIO::Monkey.patched?(Thread::ThreadsWait)).to be_truthy
     end
 
-    it '#get_origin' do
-      thread_class = LightIO::Monkey.get_origin(Thread)
-      expect(thread_class).to be == Thread::RAW_THREAD
+    it 'class methods is patched' do
+      expect(Thread.new {}).to be_a(LightIO::Library::Thread)
+      expect(Thread.new {Thread.current}.value).to be_a(LightIO::Library::Thread)
     end
   end
 
   describe '#patch_socket!' do
-    before(:all) {LightIO::Monkey.patch_socket!}
-    after(:all) {LightIO::Monkey.unpatch_socket!}
-
     it '#patched?' do
       expect(LightIO::Monkey.patched?(LightIO)).to be_falsey
-      expect(LightIO::Monkey.patched?(Thread)).to be_falsey
       expect(LightIO::Monkey.patched?(IO)).to be_truthy
       expect(LightIO::Monkey.patched?(Socket)).to be_truthy
       expect(LightIO::Monkey.patched?(TCPSocket)).to be_truthy
@@ -48,10 +40,13 @@ RSpec.describe LightIO::Monkey do
       expect(LightIO::Monkey.patched?(UNIXServer)).to be_truthy
     end
 
-    it '#get_origin' do
-      io_class = LightIO::Monkey.get_origin(IO)
-      expect(io_class).to be == STDOUT.class
+    it 'class methods is patched' do
+      r, w = IO.pipe
+      expect(r).to be_a(LightIO::Library::IO)
+      expect(w).to be_a(LightIO::Library::IO)
+      r.close; w.close
     end
+
     describe "#accept_nonblock" do
       let(:port) {pick_random_port}
       let(:beam) {LightIO::Beam.new do
@@ -80,9 +75,6 @@ RSpec.describe LightIO::Monkey do
   end
 
   describe '#patch_kernel!' do
-    before(:all) {LightIO::Monkey.patch_kernel!}
-    after(:all) {LightIO::Monkey.unpatch_kernel!}
-
     it '#patched?' do
       expect(LightIO::Monkey.patched?(LightIO)).to be_falsey
       expect(LightIO::Monkey.patched?(Thread)).to be_falsey

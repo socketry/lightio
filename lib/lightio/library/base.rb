@@ -6,21 +6,35 @@ module LightIO::Library
         @mock_klass = klass
         define_mock_methods
         extend_class_methods
+        @mock_klass_proxy = LightIO::RawProxy.new(@mock_klass, methods: [:new])
       end
 
-      attr_reader :mock_klass
+      attr_reader :mock_klass, :mock_klass_proxy
 
       private
 
       def define_mock_methods
         define_method :is_a? do |klass|
-          self.class.__send__(:mock_klass) <= klass || super(klass)
+          mock_klass = self.class.__send__(:call_method_from_ancestors, :mock_klass)
+          return super(klass) unless mock_klass
+          mock_klass <= klass || super(klass)
         end
 
         alias_method :kind_of?, :is_a?
 
         define_method :instance_of? do |klass|
-          self.class.__send__(:mock_klass) == klass || super(klass)
+          mock_klass = self.class.__send__(:mock_klass)
+          return super(klass) unless mock_klass
+          mock_klass == klass || super(klass)
+        end
+      end
+
+      def call_method_from_ancestors(method)
+        __send__(method) || begin
+          self.ancestors.each do |klass|
+            result = klass.__send__(method)
+            break result if result
+          end
         end
       end
 
@@ -33,23 +47,19 @@ module LightIO::Library
     end
 
     module ClassMethods
-      def new(*args)
-        obj = mock_klass.new(*args)
-        _wrap(obj)
-      end
-
       def _wrap(obj)
-        if obj.is_a? self
+        if obj.instance_of? self
           obj
         else
           mock_obj = allocate
-          mock_obj.__send__(:initialize, obj)
+          mock_obj.instance_variable_set(:@obj, obj)
           mock_obj
         end
       end
     end
 
-    def initialize(obj)
+    def initialize(*args)
+      obj = self.class.send(:call_method_from_ancestors, :mock_klass_proxy).send(:new, *args)
       @obj = obj
     end
 
@@ -64,7 +74,7 @@ module LightIO::Library
       private
       def define_method_missing(base, target_var)
         base.send(:define_method, :method_missing) {|*args| instance_variable_get(target_var).__send__(*args)}
-        base.send(:define_method, :respond_to?) {|*args| instance_variable_get(target_var).respond_to?(*args)}
+        # base.send(:define_method, :respond_to?) {|*args| instance_variable_get(target_var).respond_to?(*args) || respond_to?(*args)}
         base.send(:define_method, :respond_to_missing?) {|method, *| instance_variable_get(target_var).respond_to?(method)}
       end
     end

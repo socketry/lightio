@@ -22,11 +22,11 @@ module LightIO::Library
     wrap_blocking_methods :recv, :recvmsg, :sendmsg
 
     extend Forwardable
-    def_delegators :@io_watcher, :wait, :wait_writable
+    def_delegators :io_watcher, :wait, :wait_writable
 
     def shutdown(*args)
       # close watcher before io shutdown
-      @io_watcher.close
+      io_watcher.close
       @obj.shutdown(*args)
     end
   end
@@ -40,7 +40,7 @@ module LightIO::Library
     wrap_blocking_methods :connect, :recvfrom, :accept
 
     def sys_accept
-      @io_watcher.wait_readable
+      io_watcher.wait_readable
       @obj.sys_accept
     end
 
@@ -113,7 +113,7 @@ module LightIO::Library
     end
 
     def sys_accept
-      @io_watcher.wait_readable
+      io_watcher.wait_readable
       @obj.sys_accept
     end
   end
@@ -148,7 +148,7 @@ module LightIO::Library
     mock ::UNIXServer
 
     def sys_accept
-      @io_watcher.wait_readable
+      io_watcher.wait_readable
       @obj.sys_accpet
     end
 

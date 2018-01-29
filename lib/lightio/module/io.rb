@@ -3,6 +3,8 @@ module LightIO::Module
     module ClassMethods
       include LightIO::Module::Base::Helper
 
+      IO_PROXY = ::LightIO::RawProxy.new(::IO, methods: [:pipe])
+
       def open(*args)
         io = self.new(*args)
         return io unless block_given?
@@ -14,7 +16,7 @@ module LightIO::Module
       end
 
       def pipe(*args)
-        r, w = mock_klass.pipe(*args)
+        r, w = IO_PROXY.send(:pipe, *args)
         if block_given?
           begin
             return yield r, w
@@ -23,6 +25,7 @@ module LightIO::Module
             r.close
           end
         end
+        # [r, w]
         [wrap_to_library(r), wrap_to_library(w)]
       end
 
@@ -72,7 +75,7 @@ module LightIO::Module
         unless io.is_a?(LightIO::Library::IO)
           io = convert_to_io(io)
         end
-        io.instance_variable_get(:@io_watcher)
+        io.__send__(:io_watcher)
       end
     end
   end

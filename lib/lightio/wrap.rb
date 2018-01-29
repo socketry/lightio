@@ -26,9 +26,7 @@ module LightIO::Wrap
     #
     # @param [IO, Socket]  io raw ruby io object
     def initialize(*args)
-      io = super
-      @io_watcher ||= LightIO::Watchers::IO.new(io)
-      io
+      @obj ||= super
     end
 
     protected
@@ -41,13 +39,17 @@ module LightIO::Wrap
         result = __send__(method, *args, exception: false)
         case result
           when :wait_readable
-            @io_watcher.wait_readable
+            io_watcher.wait_readable
           when :wait_writable
-            @io_watcher.wait_writable
+            io_watcher.wait_writable
           else
             return result
         end
       end
+    end
+
+    def io_watcher
+      @io_watcher ||= LightIO::Watchers::IO.new(@obj)
     end
 
     module ClassMethods

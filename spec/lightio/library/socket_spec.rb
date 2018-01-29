@@ -10,7 +10,7 @@ class EchoServer
   def run
     while (socket = @server.accept)
       _, port, host = socket.peeraddr
-      puts "accept connection from #{host}:#{port}"
+      # puts "accept connection from #{host}:#{port}"
 
       # LightIO::Beam is lightweight executor, provide thread-like interface
       # just start new beam for per socket
@@ -26,7 +26,7 @@ class EchoServer
     socket.write(data)
   rescue EOFError
     _, port, host = socket.peeraddr
-    puts "*** #{host}:#{port} disconnected"
+    # puts "*** #{host}:#{port} disconnected"
     socket.close
     nil
   end

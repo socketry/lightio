@@ -8,7 +8,7 @@ RSpec.describe LightIO::IOloop do
 
   it "per threaded" do
     t = Thread.new {LightIO::IOloop.current}
-    expect(t.value).to_not be == LightIO::IOloop.current
+    expect(t.value == LightIO::IOloop.current).to eq LightIO::Monkey.patched?(Thread)
   end
 
   describe "#close" do

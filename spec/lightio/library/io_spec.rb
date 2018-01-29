@@ -11,11 +11,35 @@ RSpec.describe LightIO::Library::IO do
       io.close
     end
 
+
     it "#instance_of?" do
       io = LightIO::Library::IO.new(1)
       expect(io).to be_an_instance_of(LightIO::Library::IO)
       expect(io).to be_an_instance_of(IO)
       io.close
+    end
+  end
+
+  describe 'inherited from IO' do
+    it "#is_a? & #instance_of?" do
+      klass = Class.new(LightIO::Library::IO)
+      io = klass.new(1)
+      expect(io).to be_a(LightIO::Library::IO)
+      expect(io).to be_a(IO)
+      expect(io).to_not be_an_instance_of(LightIO::Library::IO)
+      expect(io).to_not be_an_instance_of(IO)
+      io.close
+    end
+
+    it ".pipe" do
+      klass = Class.new(LightIO::Library::IO)
+      r, w = klass.pipe
+      expect(r).to be_an_instance_of(klass)
+      expect(w).to be_an_instance_of(klass)
+      w << "hello"
+      w.close
+      expect(r.read).to eq "hello"
+      r.close; w.close
     end
   end
 
@@ -53,8 +77,8 @@ RSpec.describe LightIO::Library::IO do
       r, w = LightIO::Library::IO.pipe
       r.close
       w.close
-      expect(r.instance_variable_get(:@io_watcher).closed?).to be_truthy
-      expect(w.instance_variable_get(:@io_watcher).closed?).to be_truthy
+      expect(r.__send__(:io_watcher).closed?).to be_truthy
+      expect(w.__send__(:io_watcher).closed?).to be_truthy
     end
 
     it 'call on closed io' do

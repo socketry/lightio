@@ -103,7 +103,7 @@ module LightIO::Library
 
     def close(*args)
       # close watcher before io closed
-      @io_watcher.close
+      io_watcher.close
       @obj.close
     end
 
@@ -117,7 +117,7 @@ module LightIO::Library
         ungetbyte(b)
         return
       end
-      @io_watcher.wait_readable
+      io_watcher.wait_readable
     end
   end
 end
