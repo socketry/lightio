@@ -50,11 +50,15 @@ module LightIO
       def patch_kernel!
         patch_method!(Kernel, :sleep, LightIO.method(:sleep))
         patch_method!(Kernel, :select, LightIO::Library::IO.method(:select))
+        patch_instance_method!(Kernel, :sleep, LightIO.method(:sleep))
+        patch_instance_method!(Kernel, :select, LightIO::Library::IO.method(:select))
       end
 
       def unpatch_kernel!
         unpatch_method!(Kernel, :sleep, LightIO.method(:sleep))
         unpatch_method!(Kernel, :select, LightIO::Library::IO.method(:select))
+        unpatch_instance_method!(Kernel, :sleep, LightIO.method(:sleep))
+        unpatch_instance_method!(Kernel, :select, LightIO::Library::IO.method(:select))
       end
 
       private
@@ -111,8 +115,30 @@ module LightIO
 
       def unpatch_method!(const, method)
         raise PatchError, "can't find patched method #{const}.#{method}" unless patched_method?(const, method)
-        origin_method = patched[const].delete(method)
+        origin_method = patched_methods(const).delete(method)
         const.send(:define_singleton_method, method, origin_method)
+        nil
+      end
+
+      def patched_instance_method?(obj, method)
+        patched_instance_methods(obj).key?(method)
+      end
+
+      def patched_instance_methods(const)
+        (patched[:instance_methods] ||= {})[const] ||= {}
+      end
+
+      def patch_instance_method!(const, method, patched_method)
+        raise PatchError, "already patched method #{const}.#{method}" if patched_instance_method?(const, method)
+        patched_instance_methods(const)[method] = patched_method
+        const.send(:define_method, method, patched_method)
+        nil
+      end
+
+      def unpatch_instance_method!(const, method)
+        raise PatchError, "can't find patched method #{const}.#{method}" unless patched_instance_method?(const, method)
+        origin_method = patched_instance_methods(const).delete(method)
+        const.send(:define_method, method, origin_method)
         nil
       end
 

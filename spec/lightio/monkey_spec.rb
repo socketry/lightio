@@ -100,20 +100,36 @@ RSpec.describe LightIO::Monkey, skip_library: true do
       expect(LightIO::Monkey.patched?(LightIO)).to be_falsey
     end
 
-    it '#select patched' do
-      r, w = IO.pipe
-      w.close
-      expect {
-        # rspec also provide a `select` dsl, it breaks lightio monkey patch, so here we use Kernel.select
-        read_fds, write_fds = Kernel.select([r], nil, nil, 0)
-      }.to_not raise_error
+    context 'kernel' do
+      it '#select patched' do
+        r, w = IO.pipe
+        w.close
+        expect {
+          read_fds, write_fds = Kernel.select([r], nil, nil, 0)
+        }.to_not raise_error
+      end
+
+      it '#sleep patched' do
+        start = Time.now
+        100.times.map {LightIO::Beam.new {Kernel.sleep 0.1}}.each(&:join)
+        expect(Time.now - start).to be < 1
+      end
     end
 
-    it '#sleep patched' do
-      # rspec also provide a `sleep` dsl, it breaks lightio monkey patch, so here we use Kernel.sleep
-      start = Time.now
-      100.times.map {LightIO::Beam.new {Kernel.sleep 0.1}}.each(&:join)
-      expect(Time.now - start).to be < 1
+    context 'main' do
+      it '#select patched' do
+        r, w = IO.pipe
+        w.close
+        expect {
+          read_fds, write_fds = select([r], nil, nil, 0)
+        }.to_not raise_error
+      end
+
+      it '#sleep patched' do
+        start = Time.now
+        100.times.map {LightIO::Beam.new {sleep 0.1}}.each(&:join)
+        expect(Time.now - start).to be < 1
+      end
     end
   end
 end
