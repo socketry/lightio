@@ -1,6 +1,7 @@
 # Example from https://github.com/socketry/nio4r/blob/master/examples/echo_server.rb
 # rewrite it in lightio for demonstrate
-# this example demonstrate how to use ruby 'raw' socket with LightIO
+# this example demonstrate LightIO low-level API
+# how to use ruby 'raw'(unpatched) socket with LightIO
 
 require 'lightio'
 require 'socket'

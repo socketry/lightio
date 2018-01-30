@@ -1,5 +1,7 @@
 # Example from https://github.com/socketry/nio4r/blob/master/examples/echo_server.rb
 # rewrite it in lightio for demonstrate
+# this example demonstrate LightIO Libraries API
+# look LightIO::Library namespace to find more
 
 require 'lightio'
 

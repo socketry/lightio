@@ -6,9 +6,11 @@
 [![Coverage Status](https://coveralls.io/repos/github/socketry/lightio/badge.svg?branch=master)](https://coveralls.io/github/socketry/lightio?branch=master)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jjyr/lightio/blob/master/LICENSE.txt)
 
-LightIO is a ruby networking library, that combines ruby fiber and fast IO event loop.
+LightIO is a ruby concurrency networking library, that combines ruby fiber and fast IO event loop.
 
-The intent of LightIO is to provide ruby stdlib compatible modules, that user can use these modules instead stdlib, to gain the benefits of IO event loop without care any details about react or async programming.
+* **Simple**, LightIO provide same API with ruby stdlib, from low level to high level, use `LightIO::Thread` to start green threads, use `LightIO::Socket` `LightIO::TCPServer` for IO operations.
+* **Transparent**, LightIO encourage user to write multi threads and blocking-IO style code, LightIO will transfer actual IO operations to inner IO loop.
+* **Monkey patch**(experiment), LightIO provide reversible monkey patch, call `LightIO::Monkey.patch_all!` to apply, it will let LightIO inner loop to take over all IO operations, and patch threads to light weight fibers.
 
 See [Wiki](https://github.com/jjyr/lightio/wiki) and [Roadmap](https://github.com/jjyr/lightio/wiki/Current-status-and-roadmap) to get more information.
 
@@ -59,7 +61,7 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/jjyr/l
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
 
-Copyright, 2017, by [Jiang Jinyang](http://justjjy.com/)
+Copyright, 2017-2018, by [Jiang Jinyang](http://justjjy.com/)
 
 ## Code of Conduct
 
