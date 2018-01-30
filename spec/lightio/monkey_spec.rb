@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe LightIO::Monkey do
+RSpec.describe LightIO::Monkey, skip_library: true do
   describe '#patch_thread!' do
     it '#patched?' do
       expect(LightIO::Monkey.patched?(LightIO)).to be_falsey
@@ -25,10 +25,11 @@ RSpec.describe LightIO::Monkey do
     end
   end
 
-  describe '#patch_socket!' do
+  describe '#patch_io!' do
     it '#patched?' do
       expect(LightIO::Monkey.patched?(LightIO)).to be_falsey
       expect(LightIO::Monkey.patched?(IO)).to be_truthy
+      expect(LightIO::Monkey.patched?(File)).to be_truthy
       expect(LightIO::Monkey.patched?(Socket)).to be_truthy
       expect(LightIO::Monkey.patched?(TCPSocket)).to be_truthy
       expect(LightIO::Monkey.patched?(TCPServer)).to be_truthy
@@ -40,11 +41,31 @@ RSpec.describe LightIO::Monkey do
       expect(LightIO::Monkey.patched?(UNIXServer)).to be_truthy
     end
 
+    it '#new' do
+      io = IO.new(1)
+      expect(io).to be_a(LightIO::Library::IO)
+      io.close
+    end
+
     it 'class methods is patched' do
       r, w = IO.pipe
       expect(r).to be_a(LightIO::Library::IO)
       expect(w).to be_a(LightIO::Library::IO)
       r.close; w.close
+    end
+
+    describe File do
+      it '#new' do
+        f = File.new("README.md", "r")
+        expect(f).to be_a(File)
+        f.close
+      end
+
+      it "#open" do
+        f = File.new("README.md", "r")
+        expect(f).to be_a(File)
+        f.close
+      end
     end
 
     describe "#accept_nonblock" do
@@ -55,7 +76,7 @@ RSpec.describe LightIO::Monkey do
           IO.select([serv])
           s = serv.accept_nonblock
           expect(s).to be_a LightIO::Library::TCPSocket
-          s.puts Date.today
+          s.puts Process.pid.to_s
           s.close
         }
       end}
@@ -68,7 +89,7 @@ RSpec.describe LightIO::Monkey do
           retry
         end
         beam.join(0.0001)
-        expect(client.gets).to be == "#{Date.today.to_s}\n"
+        expect(client.gets).to be == "#{Process.pid.to_s}\n"
         client.close
       end
     end
@@ -77,26 +98,21 @@ RSpec.describe LightIO::Monkey do
   describe '#patch_kernel!' do
     it '#patched?' do
       expect(LightIO::Monkey.patched?(LightIO)).to be_falsey
-      expect(LightIO::Monkey.patched?(Thread)).to be_falsey
-      expect(LightIO::Monkey.patched?(IO)).to be_falsey
-    end
-
-    it '#get_origin' do
-      expect(LightIO::Monkey.get_origin(IO)).to be_nil
-      expect(LightIO::Monkey.get_origin(Thread)).to be_nil
     end
 
     it '#select patched' do
       r, w = IO.pipe
       w.close
       expect {
-        read_fds, write_fds = select([r], nil, nil, 0)
-      }.to raise_error(TypeError, "can't process raw IO, use LightIO::IO._wrap(obj) to wrap it")
+        # rspec also provide a `select` dsl, it breaks lightio monkey patch, so here we use Kernel.select
+        read_fds, write_fds = Kernel.select([r], nil, nil, 0)
+      }.to_not raise_error
     end
 
     it '#sleep patched' do
+      # rspec also provide a `sleep` dsl, it breaks lightio monkey patch, so here we use Kernel.sleep
       start = Time.now
-      100.times.map {LightIO::Beam.new {sleep 0.1}}.each(&:join)
+      100.times.map {LightIO::Beam.new {Kernel.sleep 0.1}}.each(&:join)
       expect(Time.now - start).to be < 1
     end
   end

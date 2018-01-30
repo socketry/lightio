@@ -20,28 +20,28 @@ RSpec.describe LightIO::Library::IO do
     end
   end
 
-  describe 'inherited from IO' do
-    it "#is_a? & #instance_of?" do
-      klass = Class.new(LightIO::Library::IO)
-      io = klass.new(1)
-      expect(io).to be_a(LightIO::Library::IO)
-      expect(io).to be_a(IO)
-      expect(io).to_not be_an_instance_of(LightIO::Library::IO)
-      expect(io).to_not be_an_instance_of(IO)
-      io.close
-    end
-
-    it ".pipe" do
-      klass = Class.new(LightIO::Library::IO)
-      r, w = klass.pipe
-      expect(r).to be_an_instance_of(klass)
-      expect(w).to be_an_instance_of(klass)
-      w << "hello"
-      w.close
-      expect(r.read).to eq "hello"
-      r.close; w.close
-    end
-  end
+  # describe 'inherited from IO' do
+  #   it "#is_a? & #instance_of?" do
+  #     klass = Class.new(LightIO::Library::IO)
+  #     io = klass.new(1)
+  #     expect(io).to be_a(LightIO::Library::IO)
+  #     expect(io).to be_a(IO)
+  #     expect(io).to_not be_an_instance_of(LightIO::Library::IO)
+  #     expect(io).to_not be_an_instance_of(IO)
+  #     io.close
+  #   end
+  #
+  #   it ".pipe" do
+  #     klass = Class.new(LightIO::Library::IO)
+  #     r, w = klass.pipe
+  #     expect(r).to be_an_instance_of(klass)
+  #     expect(w).to be_an_instance_of(klass)
+  #     w << "hello"
+  #     w.close
+  #     expect(r.read).to eq "hello"
+  #     r.close; w.close
+  #   end
+  # end
 
   describe "#wait methods" do
     it "#wait_readable" do

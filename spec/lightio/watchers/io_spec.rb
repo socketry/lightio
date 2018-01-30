@@ -1,18 +1,19 @@
 require 'spec_helper'
 
 RSpec.describe LightIO::Watchers::IO do
+  let(:pipe) {IO.send :origin_pipe}
   describe "Watchers::IO" do
     it 'can not call wait on closed io watcher' do
-      r, w = IO.pipe
+      r, w = pipe
       io_watcher = LightIO::Watchers::IO.new(r, :r)
       io_watcher.close
       expect {io_watcher.wait_readable}.to raise_error(EOFError)
     end
 
     it 'can not cross threads' do
-      r, w = IO.pipe
+      r, w = pipe
       io_watcher = LightIO::Watchers::IO.new(r, :r)
-      expect {Thread.start {io_watcher.wait_readable}.value}.to raise_error(LightIO::Error)
+      expect {Thread.send(:origin_start) {io_watcher.wait_readable}.value}.to raise_error(LightIO::Error)
       io_watcher.close
       r.close; w.close
     end
@@ -20,7 +21,7 @@ RSpec.describe LightIO::Watchers::IO do
 
   describe "Watchers::IO with beam" do
     it "#wait_read works" do
-      r, w = IO.pipe
+      r, w = pipe
       b = LightIO::Beam.new {
         io_watcher = LightIO::Watchers::IO.new(r, :r)
         io_watcher.wait_readable
@@ -35,7 +36,7 @@ RSpec.describe LightIO::Watchers::IO do
     end
 
     it "#wait_read and #wait_write between beams" do
-      r, w = IO.pipe
+      r, w = pipe
       b = LightIO::Beam.new {
         io_watcher = LightIO::Watchers::IO.new(r, :r)
         io_watcher.wait_readable
@@ -55,7 +56,7 @@ RSpec.describe LightIO::Watchers::IO do
     end
 
     it "#wait_read on main fiber" do
-      r, w = IO.pipe
+      r, w = pipe
       LightIO::Beam.new {w << "Hello from Beam"; w.close}
       io_watcher = LightIO::Watchers::IO.new(r, :r)
       io_watcher.wait_readable
@@ -66,7 +67,7 @@ RSpec.describe LightIO::Watchers::IO do
 
   describe "#wait_read with timeout" do
     it "beam wait until timeout" do
-      r, _w = IO.pipe
+      r, _w = pipe
       b = LightIO::Beam.new {
         io_watcher = LightIO::Watchers::IO.new(r, :r)
         data = if io_watcher.wait_readable(0.001)
@@ -79,7 +80,7 @@ RSpec.describe LightIO::Watchers::IO do
     end
 
     it "root wait until timeout" do
-      r, _w = IO.pipe
+      r, _w = pipe
       io_watcher = LightIO::Watchers::IO.new(r, :r)
       data = if io_watcher.wait_readable(0.001)
                r.read
@@ -93,8 +94,8 @@ RSpec.describe LightIO::Watchers::IO do
   describe "#wait_read multiple io at same time" do
     it "two beams wait two pipe" do
       results = 2.times.map do
-        r, w = IO.pipe
-        cr, cw = IO.pipe
+        r, w = IO.send(:origin_pipe)
+        cr, cw = IO.send(:origin_pipe)
         b = LightIO::Beam.new(cr, w) {|r, w|
           io_watcher = LightIO::Watchers::IO.new(r, :r)
           loop do

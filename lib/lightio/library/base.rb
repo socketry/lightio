@@ -4,14 +4,37 @@ module LightIO::Library
       protected
       def mock(klass)
         @mock_klass = klass
+        define_alias_methods
+        define_method_missing(singleton_class, @mock_klass)
+        define_instance_method_missing(self, :@obj)
         define_mock_methods
         extend_class_methods
-        @mock_klass_proxy = LightIO::RawProxy.new(@mock_klass, methods: [:new])
       end
 
-      attr_reader :mock_klass, :mock_klass_proxy
+      attr_reader :mock_klass
 
       private
+
+      def define_alias_methods
+        class_methods_module = LightIO::Module.const_get("#{mock_klass}::ClassMethods") rescue nil
+        return unless class_methods_module
+        methods = class_methods_module.instance_methods(false).select {|method| mock_klass.respond_to?(method)}
+        methods.each do |method|
+          origin_method_name = "origin_#{method}"
+          mock_klass.singleton_class.__send__(:alias_method, origin_method_name, method)
+          mock_klass.singleton_class.__send__(:protected, origin_method_name)
+        end
+      end
+
+      def define_method_missing(base, target_var)
+        base.send(:define_method, :method_missing) {|*args| target_var.__send__(*args)}
+        base.send(:define_method, :respond_to_missing?) {|method, *| target_var.respond_to?(method)}
+      end
+
+      def define_instance_method_missing(base, target_var)
+        base.send(:define_method, :method_missing) {|*args| instance_variable_get(target_var).__send__(*args)}
+        base.send(:define_method, :respond_to_missing?) {|method, *| instance_variable_get(target_var).respond_to?(method)}
+      end
 
       def define_mock_methods
         define_method :is_a? do |klass|
@@ -59,7 +82,7 @@ module LightIO::Library
     end
 
     def initialize(*args)
-      obj = self.class.send(:call_method_from_ancestors, :mock_klass_proxy).send(:new, *args)
+      obj = self.class.send(:call_method_from_ancestors, :mock_klass).send(:origin_new, *args)
       @obj = obj
     end
 
@@ -67,15 +90,6 @@ module LightIO::Library
       def included(base)
         base.send :extend, MockMethods
         base.send :extend, ClassMethods
-        define_method_missing(base, :@obj)
-        define_method_missing(base.singleton_class, :@mock_klass)
-      end
-
-      private
-      def define_method_missing(base, target_var)
-        base.send(:define_method, :method_missing) {|*args| instance_variable_get(target_var).__send__(*args)}
-        # base.send(:define_method, :respond_to?) {|*args| instance_variable_get(target_var).respond_to?(*args) || respond_to?(*args)}
-        base.send(:define_method, :respond_to_missing?) {|method, *| instance_variable_get(target_var).respond_to?(method)}
       end
     end
   end

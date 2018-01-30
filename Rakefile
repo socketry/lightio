@@ -6,7 +6,7 @@ RSpec::Core::RakeTask.new(:"spec:library") do |t|
 end
 
 RSpec::Core::RakeTask.new(:"spec:monkey_patch") do |t|
-  t.rspec_opts = "-r monkey_patch.rb"
+  t.rspec_opts = "-r monkey_patch.rb --tag ~skip_monkey_patch"
 end
 
 task :default => :spec

@@ -11,7 +11,7 @@ RSpec.describe LightIO::IOloop do
     expect(t.value == LightIO::IOloop.current).to eq LightIO::Monkey.patched?(Thread)
   end
 
-  describe "#close" do
+  describe "#close", skip_monkey_patch: true do
     it "#closed?" do
       result = []
       t = Thread.new {

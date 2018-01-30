@@ -1,9 +1,35 @@
 module LightIO::Module
+  extend Base::NewHelper
+
+  define_new_for_module "IO"
+
   module IO
+    include LightIO::Module::Base
+
+    class << self
+      # helper methods
+      def convert_to_io(io)
+        unless io.respond_to?(:to_io)
+          raise TypeError, "no implicit conversion of #{io.class} into IO"
+        end
+        to_io = io.to_io
+        unless to_io.is_a?(LightIO::Library::IO)
+          raise TypeError, "can't process raw IO, use LightIO::IO._wrap(obj) to wrap it" if to_io.is_a?(::IO)
+          raise TypeError, "can't convert #{io.class} to IO (#{io.class}#to_io gives #{to_io.class})"
+        end
+        to_io
+      end
+
+      def get_io_watcher(io)
+        unless io.is_a?(LightIO::Library::IO)
+          io = convert_to_io(io)
+        end
+        io.__send__(:io_watcher)
+      end
+    end
+
     module ClassMethods
       include LightIO::Module::Base::Helper
-
-      IO_PROXY = ::LightIO::RawProxy.new(::IO, methods: [:pipe])
 
       def open(*args)
         io = self.new(*args)
@@ -16,7 +42,7 @@ module LightIO::Module
       end
 
       def pipe(*args)
-        r, w = IO_PROXY.send(:pipe, *args)
+        r, w = origin_pipe(*args)
         if block_given?
           begin
             return yield r, w
@@ -35,17 +61,17 @@ module LightIO::Module
         write_fds ||= []
         loop do
           # make sure io registered, then clear io watcher status
-          read_fds.each {|fd| get_io_watcher(fd).tap {|io| io.readable?; io.clear_status}}
-          write_fds.each {|fd| get_io_watcher(fd).tap {|io| io.writable?; io.clear_status}}
+          read_fds.each {|fd| LightIO::Module::IO.get_io_watcher(fd).tap {|io| io.readable?; io.clear_status}}
+          write_fds.each {|fd| LightIO::Module::IO.get_io_watcher(fd).tap {|io| io.writable?; io.clear_status}}
           # run ioloop once
           LightIO.sleep 0
           r_fds = read_fds.select {|fd|
-            io = convert_to_io(fd)
-            io.closed? ? raise(IOError, 'closed stream') : get_io_watcher(io).readable?
+            io = LightIO::Module::IO.convert_to_io(fd)
+            io.closed? ? raise(IOError, 'closed stream') : LightIO::Module::IO.get_io_watcher(io).readable?
           }
           w_fds = write_fds.select {|fd|
-            io = convert_to_io(fd)
-            io.closed? ? raise(IOError, 'closed stream') : get_io_watcher(io).writable?
+            io = LightIO::Module::IO.convert_to_io(fd)
+            io.closed? ? raise(IOError, 'closed stream') : LightIO::Module::IO.get_io_watcher(io).writable?
           }
           e_fds = []
           if r_fds.empty? && w_fds.empty?
@@ -56,26 +82,6 @@ module LightIO::Module
             return [r_fds, w_fds, e_fds]
           end
         end
-      end
-
-      private
-      def convert_to_io(io)
-        unless io.respond_to?(:to_io)
-          raise TypeError, "no implicit conversion of #{io.class} into IO"
-        end
-        to_io = io.to_io
-        unless to_io.is_a?(LightIO::Library::IO)
-          raise TypeError, "can't process raw IO, use LightIO::IO._wrap(obj) to wrap it" if to_io.is_a?(::IO)
-          raise TypeError, "can't convert #{io.class} to IO (#{io.class}#to_io gives #{to_io.class})"
-        end
-        to_io
-      end
-
-      def get_io_watcher(io)
-        unless io.is_a?(LightIO::Library::IO)
-          io = convert_to_io(io)
-        end
-        io.__send__(:io_watcher)
       end
     end
   end

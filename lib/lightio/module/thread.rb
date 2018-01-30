@@ -1,15 +1,15 @@
 require 'thread'
 
 module LightIO::Module
-  module Thread
-    RAW_THREAD = ::Thread
+  extend Base::NewHelper
 
+  define_new_for_modules *%w{ThreadGroup Mutex Queue SizedQueue ConditionVariable}
+
+  module Thread
     include LightIO::Module::Base
 
     module ClassMethods
       extend Forwardable
-
-      THREAD_PROXY = ::LightIO::RawProxy.new(::Thread, methods: [:current, :main])
 
       def new(*args, &blk)
         obj = LightIO::Library::Thread.__send__ :allocate
@@ -31,7 +31,7 @@ module LightIO::Module
 
       def current
         return main if LightIO::Core::LightFiber.is_root?(Fiber.current)
-        LightIO::Library::Thread.instance_variable_get(:@current_thread) || THREAD_PROXY.send(:current)
+        LightIO::Library::Thread.instance_variable_get(:@current_thread) || origin_current
       end
 
       def exclusive(&blk)
@@ -69,7 +69,7 @@ module LightIO::Module
       end
 
       def main
-        THREAD_PROXY.send(:main)
+        origin_main
       end
     end
   end

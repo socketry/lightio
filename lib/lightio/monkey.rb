@@ -3,7 +3,7 @@ module LightIO
     class PatchError < StandardError
     end
 
-    SOCKET_PATCH_CONSTANTS = %w{IO Socket Socket::Ifaddr TCPServer TCPSocket BasicSocket Addrinfo IPSocket UDPSocket UNIXSocket UNIXServer}.freeze
+    IO_PATCH_CONSTANTS = %w{IO File Socket Socket::Ifaddr TCPServer TCPSocket BasicSocket Addrinfo IPSocket UDPSocket UNIXSocket UNIXServer}.freeze
     THREAD_PATCH_CONSTANTS = %w{Thread ThreadGroup Queue SizedQueue ConditionVariable Mutex ThreadsWait}.freeze
 
     @patched
@@ -11,13 +11,13 @@ module LightIO
     class << self
       def patch_all!
         patch_thread!
-        patch_socket!
+        patch_io!
         patch_kernel!
       end
 
       def unpatch_all!
         unpatch_thread!
-        unpatch_socket!
+        unpatch_io!
         unpatch_kernel!
       end
 
@@ -37,14 +37,14 @@ module LightIO
         unpatch_method!(Timeout, :timeout)
       end
 
-      def patch_socket!
+      def patch_io!
         require 'socket'
-        SOCKET_PATCH_CONSTANTS.each {|klass_name| patch!(klass_name)}
+        IO_PATCH_CONSTANTS.each {|klass_name| patch!(klass_name)}
       end
 
-      def unpatch_socket!
+      def unpatch_io!
         require 'socket'
-        SOCKET_PATCH_CONSTANTS.each {|klass_name| unpatch!(klass_name)}
+        IO_PATCH_CONSTANTS.each {|klass_name| unpatch!(klass_name)}
       end
 
       def patch_kernel!
@@ -64,11 +64,6 @@ module LightIO
         patched[klass] = {}
         class_methods_module = find_class_methods_module(klass_name)
         methods = class_methods_module && find_monkey_patch_class_methods(klass_name)
-        # if methods&.delete(:new)
-        #   patch_method!(klass, :new, class_methods_module.instance_method(:new))
-        # else
-        #   patch_method!(klass, :new, LightIO::Library::Base::ClassMethods.instance_method(:new))
-        # end
         return unless class_methods_module && methods
         methods.each do |method_name|
           method = class_methods_module.instance_method(method_name)

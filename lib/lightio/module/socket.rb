@@ -1,6 +1,10 @@
 require 'socket'
 
 module LightIO::Module
+  extend Base::NewHelper
+
+  define_new_for_modules *%w{Addrinfo Socket IPSocket TCPSocket TCPServer UDPSocket UNIXSocket UNIXServer}
+
   module Addrinfo
     include LightIO::Module::Base
 
@@ -46,7 +50,7 @@ module LightIO::Module
 
       def wrap_class_addrinfo_return_method(method)
         define_method method do |*args|
-          result = super
+          result = __send__(:"origin_#{method}", *args)
           if result.is_a?(::Addrinfo)
             wrap_to_library(result)
           elsif result.respond_to?(:map)
@@ -80,7 +84,7 @@ module LightIO::Module
       include LightIO::Module::Base::Helper
 
       def for_fd(fd)
-        wrap_to_library(super(fd))
+        wrap_to_library(origin_for_fd(fd))
       end
     end
   end
@@ -96,25 +100,25 @@ module LightIO::Module
                                        :getnameinfo, :getservbyname
 
       def getifaddrs
-        super.map {|ifaddr| LightIO::Library::Socket::Ifaddr._wrap(ifaddr)}
+        origin_getifaddrs.map {|ifaddr| LightIO::Library::Socket::Ifaddr._wrap(ifaddr)}
       end
 
       def socketpair(domain, type, protocol)
-        super.map {|s| wrap_to_library(s)}
+        origin_socketpair(domain, type, protocol).map {|s| wrap_to_library(s)}
       end
 
       alias_method :pair, :socketpair
 
       def unix_server_socket(path)
         if block_given?
-          super(path) {|s| yield wrap_to_library(s)}
+          origin_unix_server_socket(path) {|s| yield wrap_to_library(s)}
         else
-          wrap_to_library(super(path))
+          wrap_to_library(origin_unix_server_socket(path))
         end
       end
 
       def ip_sockets_port0(ai_list, reuseaddr)
-        super(ai_list, reuseaddr).map {|s| wrap_to_library(s)}
+        origin_ip_sockets_port0(ai_list, reuseaddr).map {|s| wrap_to_library(s)}
       end
     end
   end
@@ -148,7 +152,7 @@ module LightIO::Module
       include LightIO::Module::Base::Helper
 
       def socketpair(*args)
-        super(*args).map {|io| wrap_to_library(io)}
+        origin_socketpair(*args).map {|io| wrap_to_library(io)}
       end
 
       alias_method :pair, :socketpair
