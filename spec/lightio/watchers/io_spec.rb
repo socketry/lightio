@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe LightIO::Watchers::IO do
+RSpec.describe LightIO::Watchers::IO, skip_monkey_patch: true do
   let(:pipe) {IO.send :origin_pipe}
   describe "Watchers::IO" do
     it 'can not call wait on closed io watcher' do

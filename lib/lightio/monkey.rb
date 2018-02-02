@@ -40,29 +40,27 @@ module LightIO
       def patch_io!
         require 'socket'
         IO_PATCH_CONSTANTS.each {|klass_name| patch!(klass_name)}
+        patch_method!(Process, :spawn, LightIO.method(:spawn).to_proc)
       end
 
       def unpatch_io!
         require 'socket'
         IO_PATCH_CONSTANTS.each {|klass_name| unpatch!(klass_name)}
+        unpatch_method!(Process, :spawn)
       end
 
       def patch_kernel!
-        patch_method!(Kernel, :sleep, LightIO.method(:sleep))
-        patch_method!(Kernel, :select, LightIO::Library::IO.method(:select))
-        patch_method!(Kernel, :open, LightIO::Library::File.method(:open).to_proc)
-        patch_instance_method!(Kernel, :sleep, LightIO.method(:sleep))
-        patch_instance_method!(Kernel, :select, LightIO::Library::IO.method(:select))
-        patch_instance_method!(Kernel, :open, LightIO::Library::File.method(:open).to_proc)
+        patch_kernel_method!(:sleep, LightIO.method(:sleep))
+        patch_kernel_method!(:select, LightIO::Library::IO.method(:select))
+        patch_kernel_method!(:open, LightIO::Library::File.method(:open).to_proc)
+        patch_kernel_method!(:spawn, LightIO.method(:spawn).to_proc)
       end
 
       def unpatch_kernel!
-        unpatch_method!(Kernel, :sleep)
-        unpatch_method!(Kernel, :select)
-        unpatch_method!(Kernel, :open)
-        unpatch_instance_method!(Kernel, :sleep)
-        unpatch_instance_method!(Kernel, :select)
-        unpatch_instance_method!(Kernel, :open)
+        unpatch_kernel_method!(:sleep)
+        unpatch_kernel_method!(:select)
+        unpatch_kernel_method!(:open)
+        unpatch_kernel_method!(:spawn)
       end
 
       private
@@ -90,6 +88,16 @@ module LightIO
           unpatch_method!(klass, method_name)
         end
         patched.delete(klass)
+      end
+
+      def patch_kernel_method!(method_name, method)
+        patch_method!(Kernel, method_name, method)
+        patch_instance_method!(Kernel, method_name, method)
+      end
+
+      def unpatch_kernel_method!(method_name)
+        unpatch_method!(Kernel, method_name)
+        unpatch_instance_method!(Kernel, method_name)
       end
 
       def find_class_methods_module(klass_name)

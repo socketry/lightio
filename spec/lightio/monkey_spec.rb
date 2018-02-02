@@ -39,6 +39,7 @@ RSpec.describe LightIO::Monkey, skip_library: true do
       expect(LightIO::Monkey.patched?(UDPSocket)).to be_truthy
       expect(LightIO::Monkey.patched?(UNIXSocket)).to be_truthy
       expect(LightIO::Monkey.patched?(UNIXServer)).to be_truthy
+      expect(LightIO::Monkey.patched?(Process)).to be_truthy
     end
 
     it '#new' do
@@ -93,6 +94,23 @@ RSpec.describe LightIO::Monkey, skip_library: true do
         client.close
       end
     end
+
+    describe Process do
+      context '#spawn' do
+        it 'spawn' do
+          from = Time.now.to_i
+          Process.spawn("sleep 10")
+          expect(Time.now.to_i - from).to be < 1
+        end
+
+        it 'spawn with io' do
+          r, w = LightIO::Library::IO.pipe
+          Process.spawn("date", out: w)
+          expect(r.gets.split(':').size).to eq 3
+          r.close; w.close
+        end
+      end
+    end
   end
 
   describe '#patch_kernel!' do
@@ -141,6 +159,30 @@ RSpec.describe LightIO::Monkey, skip_library: true do
         f = open('/dev/stdin', 'r')
         expect(f).to be_a(LightIO::Library::File)
         f.close
+      end
+    end
+
+    context '#spawn' do
+      it 'spawn' do
+        from = Time.now.to_i
+        spawn("sleep 10")
+        expect(Time.now.to_i - from).to be < 1
+      end
+
+      it 'spawn with io' do
+        r, w = IO.pipe
+        spawn("date", out: w)
+        expect(r.gets.split(':').size).to eq 3
+        r.close; w.close
+      end
+    end
+
+    context 'test open3' do
+      require 'open3'
+      it '#select patched' do
+        from = Time.now.to_i
+        Open3.popen3("sleep 10")
+        expect(Time.now.to_i - from).to be < 1
       end
     end
   end
