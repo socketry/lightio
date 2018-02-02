@@ -50,15 +50,19 @@ module LightIO
       def patch_kernel!
         patch_method!(Kernel, :sleep, LightIO.method(:sleep))
         patch_method!(Kernel, :select, LightIO::Library::IO.method(:select))
+        patch_method!(Kernel, :open, LightIO::Library::File.method(:open).to_proc)
         patch_instance_method!(Kernel, :sleep, LightIO.method(:sleep))
         patch_instance_method!(Kernel, :select, LightIO::Library::IO.method(:select))
+        patch_instance_method!(Kernel, :open, LightIO::Library::File.method(:open).to_proc)
       end
 
       def unpatch_kernel!
-        unpatch_method!(Kernel, :sleep, LightIO.method(:sleep))
-        unpatch_method!(Kernel, :select, LightIO::Library::IO.method(:select))
-        unpatch_instance_method!(Kernel, :sleep, LightIO.method(:sleep))
-        unpatch_instance_method!(Kernel, :select, LightIO::Library::IO.method(:select))
+        unpatch_method!(Kernel, :sleep)
+        unpatch_method!(Kernel, :select)
+        unpatch_method!(Kernel, :open)
+        unpatch_instance_method!(Kernel, :sleep)
+        unpatch_instance_method!(Kernel, :select)
+        unpatch_instance_method!(Kernel, :open)
       end
 
       private

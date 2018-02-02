@@ -114,6 +114,12 @@ RSpec.describe LightIO::Monkey, skip_library: true do
         100.times.map {LightIO::Beam.new {Kernel.sleep 0.1}}.each(&:join)
         expect(Time.now - start).to be < 1
       end
+
+      it '#open patched' do
+        f = Kernel.open('/dev/stdin', 'r')
+        expect(f).to be_a(LightIO::Library::File)
+        f.close
+      end
     end
 
     context 'main' do
@@ -129,6 +135,12 @@ RSpec.describe LightIO::Monkey, skip_library: true do
         start = Time.now
         100.times.map {LightIO::Beam.new {sleep 0.1}}.each(&:join)
         expect(Time.now - start).to be < 1
+      end
+
+      it '#open patched' do
+        f = open('/dev/stdin', 'r')
+        expect(f).to be_a(LightIO::Library::File)
+        f.close
       end
     end
   end
