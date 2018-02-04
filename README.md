@@ -6,11 +6,37 @@
 [![Coverage Status](https://coveralls.io/repos/github/socketry/lightio/badge.svg?branch=master)](https://coveralls.io/github/socketry/lightio?branch=master)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jjyr/lightio/blob/master/LICENSE.txt)
 
-LightIO is a ruby concurrency networking library, that combines ruby fiber and fast IO event loop.
+LightIO provide green thread to ruby. Like Golang's goroutine, or Crystal's fiber. In LightIO it called beam. 
 
-* **Simple**, LightIO provide same API with ruby stdlib, from low level to high level, use `LightIO::Thread` to start green threads, use `LightIO::Socket` `LightIO::TCPServer` for IO operations.
-* **Transparent**, LightIO encourage user to write multi threads and blocking-IO style code, LightIO will transfer actual IO operations to inner IO loop.
-* **Monkey patch**(experiment), LightIO provide reversible monkey patch, call `LightIO::Monkey.patch_all!` to apply, it will let LightIO inner loop to take over all IO operations, and patch threads to light weight fibers.
+LightIO ship ruby stdlib compatible library under `LightIO` or `LightIO::Library` namespace, 
+these libraries provide ability to schedule LightIO beams when IO operations occur.
+
+see [Examples](/examples) for detail.
+
+LightIO also provide a monkey patch, it replace ruby `Thread` with `LightIO::Thread`, and also replace `IO` related classes.
+
+Example:
+
+``` ruby
+LightIO::Monkey.patch_all!
+# now you can just write normal ruby code
+start = Time.now
+10.times.map do
+  Thread.new do
+    `sleep 1`
+  end
+end.each(&:join)
+puts Time.now - start
+
+``` 
+
+### You Should Know
+
+In fact ruby core team already plan to implement `Thread::Green` in core language, see https://bugs.ruby-lang.org/issues/13618
+
+It mean if ruby implemented `Thread::Green`, this library is no meaning to exists.
+But as a crazy userland implemented green thread library, it bring lot's of fun to me, so I will continue to maintain it, and welcome to use  
+
 
 See [Wiki](https://github.com/jjyr/lightio/wiki) and [Roadmap](https://github.com/jjyr/lightio/wiki/Current-status-and-roadmap) to get more information.
 
