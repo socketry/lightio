@@ -1,7 +1,8 @@
+require 'open3'
 module LightIO::Library
   module KernelExt
     KERNEL_PROXY = ::LightIO::RawProxy.new(::Kernel,
-                                           methods: [:spawn])
+                                           methods: [:spawn, :`])
 
     def sleep(*duration)
       if duration.size > 1
@@ -33,10 +34,27 @@ module LightIO::Library
       KERNEL_PROXY.send(:spawn, *commands, **options)
     end
 
+    def `(cmd)
+      Open3.popen3(cmd, out: STDOUT, err: STDERR) do |stdin, stdout, stderr, wait_thr|
+        output = LightIO::Library::IO._wrap(stdout).read
+        KERNEL_PROXY.send(:`, "exit #{wait_thr.value.exitstatus}")
+        return output
+      end
+    end
+
+    def system(*cmd, **opt)
+      Open3.popen3(*cmd, **opt) do |stdin, stdout, stderr, wait_thr|
+        return nil if LightIO::Library::IO._wrap(stderr).read.size > 0
+        return wait_thr.value.exitstatus == 0
+      end
+    rescue Errno::ENOENT
+      nil
+    end
+
     private
     def convert_io_or_array_to_raw(io_or_array)
       if io_or_array.is_a?(LightIO::Library::IO)
-        io_or_array.instance_variable_get(:@obj)
+        io_or_array.send(:light_io_raw_obj)
       elsif io_or_array.is_a?(Array)
         io_or_array.map {|io| convert_io_or_array_to_raw(io)}
       end

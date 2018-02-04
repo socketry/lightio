@@ -89,7 +89,7 @@ module LightIO::Library
         limit = args.shift if args.first.is_a?(Numeric)
       end
       s = ''
-      while (c = getc)
+      while (c = getbyte)
         s << c
         break if limit && s.size == limit
         break if c == sep

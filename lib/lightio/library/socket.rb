@@ -130,7 +130,7 @@ module LightIO::Library
     mock ::UNIXSocket
 
     def send_io(io)
-      io = io.instance_variable_get(:@obj) || io
+      io = io.send(:light_io_raw_obj) if io.is_a?(LightIO::Library::IO)
       @obj.send_io(io)
     end
 

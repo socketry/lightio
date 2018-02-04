@@ -86,6 +86,11 @@ module LightIO::Library
       @obj = obj
     end
 
+    private
+    def light_io_raw_obj
+      @obj
+    end
+
     class << self
       def included(base)
         base.send :extend, MockMethods

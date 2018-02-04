@@ -54,6 +54,8 @@ module LightIO
         patch_kernel_method!(:select, LightIO::Library::IO.method(:select))
         patch_kernel_method!(:open, LightIO::Library::File.method(:open).to_proc)
         patch_kernel_method!(:spawn, LightIO.method(:spawn).to_proc)
+        patch_kernel_method!(:`, LightIO.method(:`).to_proc)
+        patch_kernel_method!(:system, LightIO.method(:system).to_proc)
       end
 
       def unpatch_kernel!
@@ -61,6 +63,8 @@ module LightIO
         unpatch_kernel_method!(:select)
         unpatch_kernel_method!(:open)
         unpatch_kernel_method!(:spawn)
+        unpatch_kernel_method!(:`)
+        unpatch_kernel_method!(:system)
       end
 
       private

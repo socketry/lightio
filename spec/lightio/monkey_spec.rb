@@ -185,5 +185,25 @@ RSpec.describe LightIO::Monkey, skip_library: true do
         expect(Time.now.to_i - from).to be < 1
       end
     end
+
+    context '`' do
+      it 'concurrent' do
+        start = Time.now
+        10.times.map do
+          LightIO::Beam.new {`sleep 0.2`}
+        end.each(&:join)
+        expect(Time.now - start).to be < 1
+      end
+    end
+
+    context 'system' do
+      it 'concurrent' do
+        start = Time.now
+        10.times.map do
+          LightIO::Beam.new {system("sleep 0.2")}
+        end.each(&:join)
+        expect(Time.now - start).to be < 1
+      end
+    end
   end
 end
