@@ -10,44 +10,6 @@ module LightIO::Module
 
     module WrapperHelper
       protected
-      include LightIO::Module::Base::Helper
-
-      def wrap_socket_method(method)
-        define_method method do |*args|
-          socket = wrap_to_library(@obj.send(method, *args))
-          if block_given?
-            begin
-              yield socket
-            ensure
-              socket.close
-            end
-          else
-            socket
-          end
-        end
-      end
-
-      def wrap_socket_methods(*methods)
-        methods.each {|m| wrap_socket_method(m)}
-      end
-
-      def wrap_addrinfo_return_method(method)
-        define_method method do |*args|
-          result = @obj.send(method, *args)
-          if result.is_a?(::Addrinfo)
-            wrap_to_library(result)
-          elsif result.respond_to?(:map)
-            result.map {|r| wrap_to_library(r)}
-          else
-            result
-          end
-        end
-      end
-
-      def wrap_addrinfo_return_methods(*methods)
-        methods.each {|m| wrap_addrinfo_return_method(m)}
-      end
-
       def wrap_class_addrinfo_return_method(method)
         define_method method do |*args|
           result = __send__(:"origin_#{method}", *args)
@@ -67,10 +29,11 @@ module LightIO::Module
     end
 
     module ClassMethods
+      include LightIO::Module::Base::Helper
       extend WrapperHelper
 
       def foreach(*args, &block)
-        Addrinfo.getaddrinfo(*args).each(&block)
+        LightIO::Library::Addrinfo.getaddrinfo(*args).each(&block)
       end
 
       wrap_class_addrinfo_return_methods :getaddrinfo, :ip, :udp, :tcp, :unix
