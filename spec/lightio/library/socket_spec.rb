@@ -156,6 +156,12 @@ RSpec.describe LightIO::Library::Socket do
       end
     }
 
+    # bind localhost seems have some problem on MACOS, it connect two fd and never release them(even call close).
+    # so just don't close them to avoid duplication fd.
+    after {
+      #client.close
+    }
+
     it "#for_fd" do
       s = LightIO::Socket.for_fd(client.fileno)
       expect(s).to a_kind_of(LightIO::Socket)
@@ -163,7 +169,6 @@ RSpec.describe LightIO::Library::Socket do
       expect(s).to a_kind_of(LightIO::TCPSocket)
       s = LightIO::TCPServer.for_fd(client.fileno)
       expect(s).to a_kind_of(LightIO::TCPServer)
-      client.close
     end
 
     it "#to_io" do
@@ -174,7 +179,6 @@ RSpec.describe LightIO::Library::Socket do
       expect(s.to_io).to a_kind_of(LightIO::TCPSocket)
       s = LightIO::TCPServer.for_fd(client.fileno)
       expect(s.to_io).to a_kind_of(LightIO::TCPServer)
-      client.close
 
       r, w = LightIO::IO.pipe
       expect(r.to_io).to a_kind_of(LightIO::IO)
