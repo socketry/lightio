@@ -10,6 +10,18 @@ module LightIO::Library
 
     alias_method :<<, :write
 
+    def wait(timeout = nil, mode = :read)
+      io_watcher.wait(timeout, mode) && self
+    end
+
+    def wait_readable(timeout = nil)
+      wait(timeout, :read) && self
+    end
+
+    def wait_writable(timeout = nil)
+      wait(timeout, :write) && self
+    end
+
     def read(length=nil, outbuf=nil)
       raise ArgumentError, "negative length #{length} given" if length && length < 0
       (outbuf ||= "").clear
@@ -97,6 +109,13 @@ module LightIO::Library
       $_ = s
     end
 
+    def puts(*obj)
+      obj.each do |s|
+        write(s)
+        write($/)
+      end
+    end
+
     def to_io
       self
     end
@@ -105,19 +124,6 @@ module LightIO::Library
       # close watcher before io closed
       io_watcher.close
       @obj.close
-    end
-
-    private
-    def wait_readable
-      # if IO is already readable, continue wait_readable may block it forever
-      # so use getbyte detect this situation
-      # Maybe move getc and gets to thread pool is a good idea
-      b = getbyte
-      if b
-        ungetbyte(b)
-        return
-      end
-      io_watcher.wait_readable
     end
   end
 end
