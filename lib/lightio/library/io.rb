@@ -92,7 +92,6 @@ module LightIO::Library
 
     def gets(*args)
       raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 0..2)" if args.size > 2
-      return nil if eof?
       sep = $/
       if args[0].is_a?(Numeric)
         limit = args.shift
@@ -106,6 +105,7 @@ module LightIO::Library
         break if limit && s.size == limit
         break if c == sep
       end
+      s = nil if s.empty?
       $_ = s
     end
 
