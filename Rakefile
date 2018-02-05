@@ -3,6 +3,7 @@ require "rspec/core/rake_task"
 
 RSpec::Core::RakeTask.new(:"spec:library") do |t|
   t.exclude_pattern = 'spec/**/monkey_spec.rb'
+  t.rspec_opts = "--tag ~skip_library"
 end
 
 RSpec::Core::RakeTask.new(:"spec:monkey_patch") do |t|
