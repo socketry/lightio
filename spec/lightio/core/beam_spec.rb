@@ -36,6 +36,13 @@ RSpec.describe LightIO::Beam do
       expect(LightIO::Beam.new {LightIO.sleep(duration)}.join(0.01)).to be_nil
       expect(Time.now - t1).to be < duration
     end
+
+    it "within limit time" do
+      start = Time.now
+      beam = LightIO::Beam.new {1}
+      beam.join(10)
+      expect(Time.now - start).to be < 1
+    end
   end
 
   describe "#pass" do
@@ -70,7 +77,7 @@ RSpec.describe LightIO::Beam do
 
   describe "#kill" do
     it 'works' do
-      beam = LightIO::Beam.new{1 + 2}
+      beam = LightIO::Beam.new {1 + 2}
       expect(beam.alive?).to be_truthy
       expect(beam.kill).to be beam
       expect(beam.alive?).to be_falsey
@@ -79,7 +86,7 @@ RSpec.describe LightIO::Beam do
 
     it 'kill self' do
       result = []
-      beam = LightIO::Beam.new{result << 1;LightIO::Beam.current.kill;result << 2}
+      beam = LightIO::Beam.new {result << 1; LightIO::Beam.current.kill; result << 2}
       expect(beam.alive?).to be_truthy
       beam.join
       expect(beam.alive?).to be_falsey

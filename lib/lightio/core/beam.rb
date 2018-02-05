@@ -88,10 +88,19 @@ module LightIO::Core
         return self
       end
 
+      # return to current beam if beam done within time limit
+      origin_parent = parent
+      self.parent = Beam.current
       # set a transfer back timer
-      parent = Beam.current
       timer = LightIO::Watchers::Timer.new(limit)
-      timer.set_callback {parent.transfer}
+      timer.set_callback do
+        if alive?
+          caller_beam = parent
+          # resume to origin parent
+          self.parent = origin_parent
+          caller_beam.transfer
+        end
+      end
       ioloop.add_timer(timer)
       ioloop.transfer
 

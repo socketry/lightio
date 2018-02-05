@@ -16,5 +16,13 @@ RSpec.describe LightIO::Timeout do
         end
       end.to raise_error LightIO::Timeout::Error
     end
+
+    it "not timeout" do
+      start = Time.now
+      LightIO::Timeout.timeout(10) do
+        1
+      end
+      expect(Time.now - start).to be < 1
+    end
   end
 end
