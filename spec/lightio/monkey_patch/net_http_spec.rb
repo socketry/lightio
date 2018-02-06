@@ -22,7 +22,8 @@ RSpec.describe Net::HTTP, skip_library: true do
     0.times.map do
       Thread.new do
         Net::HTTP.start('localhost', port) do |http|
-          http.request_get('/sleep')
+          res = http.request_get('/sleep')
+          expect(res.code).to eq 200
         end
       end
     end.each(&:join)
