@@ -19,11 +19,11 @@ RSpec.describe Net::HTTP, skip_library: true do
 
   it 'should not block' do
     start = Time.now
-    0.times.map do
+    10.times.map do
       Thread.new do
         Net::HTTP.start('localhost', port) do |http|
           res = http.request_get('/sleep')
-          expect(res.code).to eq 200
+          expect(res.code).to eq "200"
         end
       end
     end.each(&:join)
