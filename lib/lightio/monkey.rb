@@ -13,12 +13,14 @@ module LightIO
         patch_thread!
         patch_io!
         patch_kernel!
+        nil
       end
 
       def unpatch_all!
         unpatch_thread!
         unpatch_io!
         unpatch_kernel!
+        nil
       end
 
       def patched?(obj)
@@ -29,24 +31,28 @@ module LightIO
         require 'thread'
         THREAD_PATCH_CONSTANTS.each {|klass_name| patch!(klass_name)}
         patch_method!(Timeout, :timeout, LightIO::Timeout.method(:timeout))
+        nil
       end
 
       def unpatch_thread!
         require 'thread'
         THREAD_PATCH_CONSTANTS.each {|klass_name| unpatch!(klass_name)}
         unpatch_method!(Timeout, :timeout)
+        nil
       end
 
       def patch_io!
         require 'socket'
         IO_PATCH_CONSTANTS.each {|klass_name| patch!(klass_name)}
         patch_method!(Process, :spawn, LightIO.method(:spawn).to_proc)
+        nil
       end
 
       def unpatch_io!
         require 'socket'
         IO_PATCH_CONSTANTS.each {|klass_name| unpatch!(klass_name)}
         unpatch_method!(Process, :spawn)
+        nil
       end
 
       def patch_kernel!
@@ -59,6 +65,7 @@ module LightIO
         %w{gets readline readlines}.each do |method|
           patch_kernel_method!(method.to_sym, LightIO.method(method.to_sym).to_proc)
         end
+        nil
       end
 
       def unpatch_kernel!
@@ -71,6 +78,7 @@ module LightIO
         %w{gets readline readlines}.each do |method|
           unpatch_kernel_method!(method.to_sym, LightIO.method(method.to_sym).to_proc)
         end
+        nil
       end
 
       private
