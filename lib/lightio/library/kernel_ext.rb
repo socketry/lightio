@@ -1,8 +1,11 @@
 require 'open3'
+require 'forwardable'
 module LightIO::Library
   module KernelExt
     KERNEL_PROXY = ::LightIO::RawProxy.new(::Kernel,
                                            methods: [:spawn, :`])
+
+    extend Forwardable
 
     def sleep(*duration)
       if duration.size > 1
@@ -51,6 +54,8 @@ module LightIO::Library
       nil
     end
 
+    def_delegators :stdin, :gets, :readline, :readlines
+
     private
     def convert_io_or_array_to_raw(io_or_array)
       if io_or_array.is_a?(LightIO::Library::IO)
@@ -58,6 +63,18 @@ module LightIO::Library
       elsif io_or_array.is_a?(Array)
         io_or_array.map {|io| convert_io_or_array_to_raw(io)}
       end
+    end
+
+    def stdin
+      @stdin ||= LightIO::Library::IO._wrap($stdin)
+    end
+
+    def stdout
+      @stdin ||= LightIO::Library::IO._wrap($stdout)
+    end
+
+    def stderr
+      @stdin ||= LightIO::Library::IO._wrap($stderr)
     end
   end
 end

@@ -56,6 +56,9 @@ module LightIO
         patch_kernel_method!(:spawn, LightIO.method(:spawn).to_proc)
         patch_kernel_method!(:`, LightIO.method(:`).to_proc)
         patch_kernel_method!(:system, LightIO.method(:system).to_proc)
+        %w{gets readline readlines}.each do |method|
+          patch_kernel_method!(method.to_sym, LightIO.method(method.to_sym).to_proc)
+        end
       end
 
       def unpatch_kernel!
@@ -65,6 +68,9 @@ module LightIO
         unpatch_kernel_method!(:spawn)
         unpatch_kernel_method!(:`)
         unpatch_kernel_method!(:system)
+        %w{gets readline readlines}.each do |method|
+          unpatch_kernel_method!(method.to_sym, LightIO.method(method.to_sym).to_proc)
+        end
       end
 
       private

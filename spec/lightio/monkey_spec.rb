@@ -205,5 +205,17 @@ RSpec.describe LightIO::Monkey, skip_library: true do
         expect(Time.now - start).to be < 1
       end
     end
+
+    context 'io methods' do
+      it 'should yield' do
+        result = []
+        Thread.new {result << 1}
+        expect(result).to eq []
+        expect {
+          Timeout.timeout(0.1) {gets}
+        }.to raise_error(Timeout::Error)
+        expect(result).to eq [1]
+      end
+    end
   end
 end
