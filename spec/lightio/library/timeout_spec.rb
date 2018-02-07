@@ -24,5 +24,15 @@ RSpec.describe LightIO::Timeout do
       end
       expect(Time.now - start).to be < 1
     end
+
+    it "timeout block operations" do
+      start = Time.now
+      expect {
+        LightIO::Timeout.timeout(0.1) do
+          LightIO.gets
+        end
+      }.to raise_error(Timeout::Error)
+      expect(Time.now - start).to be < 1
+    end
   end
 end
