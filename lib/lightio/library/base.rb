@@ -71,7 +71,7 @@ module LightIO::Library
             mock klass
           end
           if klass.name
-            LightIO::Library.const_set(klass.name, library_klass)
+            LightIO::Library::Base.send(:full_const_set, LightIO::Library, klass.name, library_klass)
           else
             LightIO::Library::Base.send(:nameless_classes)[klass] = library_klass
           end
@@ -119,8 +119,22 @@ module LightIO::Library
         base.send :extend, ClassMethods
       end
 
+      private
       def nameless_classes
         @nick_classes ||= {}
+      end
+
+      def full_const_set(base, mod_name, const)
+        mods = mod_name.split("::")
+        mod_name = mods.pop
+        full_mod_name = base.to_s
+        mods.each do |mod|
+          parent_mod = Object.const_get(full_mod_name)
+          parent_mod.const_get(mod) && next rescue nil
+          parent_mod.const_set(mod, Module.new)
+          full_mod_name = "#{full_mod_name}::#{mod}"
+        end
+        Object.const_get(full_mod_name).const_set(mod_name, const)
       end
     end
   end
