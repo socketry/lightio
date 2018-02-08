@@ -8,6 +8,7 @@ module LightIO::Library
         define_method_missing(singleton_class, @mock_klass)
         define_instance_method_missing(self, :@obj)
         define_mock_methods
+        define_inherited
         extend_class_methods
       end
 
@@ -61,6 +62,27 @@ module LightIO::Library
         end
       end
 
+      def define_inherited
+        mock_klass.define_singleton_method(:inherited) do |klass|
+          super(klass)
+          library_super_class = LightIO::Module::Base.find_library_class(self)
+          library_klass = Class.new(library_super_class) do
+            include LightIO::Library::Base
+            mock klass
+          end
+          if klass.name
+            LightIO::Library.const_set(klass.name, library_klass)
+          else
+            LightIO::Library::Base.send(:nameless_classes)[klass] = library_klass
+          end
+          klass.define_singleton_method :new do |*args, &blk|
+            obj = library_klass.__send__ :allocate
+            obj.__send__ :initialize, *args, &blk
+            obj
+          end
+        end
+      end
+
       def extend_class_methods
         class_methods_module = LightIO::Module.const_get("#{mock_klass}::ClassMethods")
         self.__send__ :extend, class_methods_module
@@ -95,6 +117,10 @@ module LightIO::Library
       def included(base)
         base.send :extend, MockMethods
         base.send :extend, ClassMethods
+      end
+
+      def nameless_classes
+        @nick_classes ||= {}
       end
     end
   end

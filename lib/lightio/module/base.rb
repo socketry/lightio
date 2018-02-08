@@ -1,5 +1,15 @@
 module LightIO::Module
   module Base
+    class << self
+      def find_library_class(klass)
+        return LightIO::Library::Base.send(:nameless_classes)[klass] if klass.name.nil?
+        name = klass.name
+        namespace_index = name.rindex("::")
+        class_name = namespace_index.nil? ? name : name[(namespace_index + 2)..-1]
+        LightIO::Library.const_get(class_name)
+      end
+    end
+
     module NewHelper
       protected
       def define_new_for_modules(*mods)
@@ -28,12 +38,8 @@ module LightIO::Module
         find_library_class._wrap(obj)
       end
 
-      # private
       def find_library_class
-        name = self.name
-        namespace_index = name.rindex("::")
-        class_name = namespace_index.nil? ? name : name[(namespace_index + 2)..-1]
-        LightIO::Library.const_get(class_name)
+        Base.find_library_class(self)
       end
     end
   end

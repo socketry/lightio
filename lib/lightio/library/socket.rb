@@ -167,7 +167,7 @@ module LightIO::Library
     wrap_blocking_methods :recvfrom
   end
 
-  class UNIXSocket < ::BasicSocket
+  class UNIXSocket < BasicSocket
     include Base
     mock ::UNIXSocket
 
