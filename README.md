@@ -11,7 +11,7 @@ LightIO provide green thread to ruby. Like Golang's goroutine, or Crystal's fibe
 LightIO ship ruby stdlib compatible library under `LightIO` or `LightIO::Library` namespace, 
 these libraries provide ability to schedule LightIO beams when IO operations occur.
 
-see [Examples](/examples) for detail.
+See [Examples](/examples) for detail.
 
 LightIO also provide a monkey patch, it replace ruby `Thread` with `LightIO::Thread`, and also replace `IO` related classes.
 
