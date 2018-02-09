@@ -3,7 +3,7 @@ module LightIO
     class PatchError < StandardError
     end
 
-    IO_PATCH_CONSTANTS = %w{IO File Socket Socket::Ifaddr TCPServer TCPSocket BasicSocket Addrinfo IPSocket UDPSocket UNIXSocket UNIXServer}.freeze
+    IO_PATCH_CONSTANTS = %w{IO File Socket Socket::Ifaddr TCPServer TCPSocket BasicSocket Addrinfo IPSocket UDPSocket UNIXSocket UNIXServer OpenSSL::SSL::SSLSocket}.freeze
     THREAD_PATCH_CONSTANTS = %w{Thread ThreadGroup Queue SizedQueue ConditionVariable Mutex ThreadsWait}.freeze
 
     @patched

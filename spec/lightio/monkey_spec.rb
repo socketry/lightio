@@ -40,6 +40,7 @@ RSpec.describe LightIO::Monkey, skip_library: true do
       expect(LightIO::Monkey.patched?(UNIXSocket)).to be_truthy
       expect(LightIO::Monkey.patched?(UNIXServer)).to be_truthy
       expect(LightIO::Monkey.patched?(Process)).to be_truthy
+      expect(LightIO::Monkey.patched?(OpenSSL::SSL::SSLSocket)).to be_truthy
     end
 
     it '#new' do
