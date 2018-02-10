@@ -12,7 +12,10 @@ module LightIO::Library
         wrap_blocking_methods :connect, :accept
 
         def initialize(io, *args)
-          io = io.send(:light_io_raw_obj) if io.is_a?(LightIO::Library::IO)
+          if io.is_a?(LightIO::Library::IO)
+            @_wrapped_socket = io
+            io = io.send(:light_io_raw_obj)
+          end
           super(io, *args)
         end
 
@@ -20,6 +23,12 @@ module LightIO::Library
           socket = @obj.accept_nonblock(*args)
           socket.is_a?(Symbol) ? socket : self.class._wrap(socket)
         end
+
+        def to_io
+          @_wrapped_socket || @obj.io
+        end
+
+        alias io to_io
       end
     end
   end
