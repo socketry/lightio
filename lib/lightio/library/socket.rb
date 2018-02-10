@@ -138,11 +138,36 @@ module LightIO::Library
     include Base
     mock ::TCPSocket
     wrap_methods_run_in_threads_pool :gethostbyname
+
+    def initialize(*args)
+      raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 2..4)" if args.size < 2 || args.size > 4
+      host, port = args[0..1]
+      local_host, local_port = args[2..3]
+      addrinfo = Addrinfo.getaddrinfo(host, port, nil, :STREAM)[0]
+      socket = ::Socket.send(:origin_new, addrinfo.afamily, Socket::SOCK_STREAM, 0)
+      if local_host || local_port
+        local_address = Socket.sockaddr_in(local_port, local_host)
+        socket.bind(local_address)
+      end
+      remote_address = Socket.sockaddr_in(addrinfo.ip_port, addrinfo.ip_address)
+      @obj = socket
+      wait_nonblock(:connect_nonblock, remote_address)
+      @obj
+    end
+
+    private
+    def connect_nonblock(*args)
+      @obj.connect_nonblock(*args)
+    end
   end
 
   class TCPServer < TCPSocket
     include Base
     mock ::TCPServer
+
+    def initialize(*args)
+      @obj = ::TCPServer.send(:origin_new, *args)
+    end
 
     def accept
       socket = wait_nonblock(:accept_nonblock)
