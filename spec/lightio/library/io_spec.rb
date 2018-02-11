@@ -40,7 +40,7 @@ RSpec.describe LightIO::Library::IO do
     it "#wait works" do
       r, w = LightIO::Library::IO.pipe
       if RUBY_VERSION > '2.5.0'
-        w.write "Hello", "IO"
+        w.write "Hello", " ", "IO"
       else
         w.write "Hello IO"
       end

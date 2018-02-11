@@ -16,7 +16,7 @@ RSpec.describe LightIO::Monkey, skip_library: true do
       expect(LightIO::Monkey.patched?(ConditionVariable)).to be_truthy
       expect(LightIO::Monkey.patched?(Timeout)).to be_truthy
       expect(LightIO::Monkey.patched?(ThreadsWait)).to be_truthy
-      expect(LightIO::Monkey.patched?(Thread::ThreadsWait)).to be_truthy
+      expect(LightIO::Monkey.patched?(Thread::ThreadsWait)).to be_truthy if RUBY_VERSION < '2.5.0'
     end
 
     it 'class methods is patched' do
