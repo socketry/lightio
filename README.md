@@ -8,27 +8,62 @@
 
 LightIO provide green thread to ruby. Like Golang's goroutine, or Crystal's fiber. In LightIO it called beam. 
 
+Example:
+
+``` ruby
+require 'lightio'
+
+start = Time.now
+
+beams = 1000.times.map do
+  # LightIO::Beam is green-thread, use it instead Thread
+  LightIO::Beam.new do
+    # do some io operations in beam
+    LightIO.sleep(1)
+  end
+end
+
+beams.each(&:join)
+seconds = Time.now - start
+puts "1000 beams take #{seconds - 1} seconds to create"
+
+```
+
+
 LightIO ship ruby stdlib compatible library under `LightIO` or `LightIO::Library` namespace, 
 these libraries provide ability to schedule LightIO beams when IO operations occur.
 
-See [Examples](/examples) for detail.
 
 LightIO also provide a monkey patch, it replace ruby `Thread` with `LightIO::Thread`, and also replace `IO` related classes.
 
 Example:
 
 ``` ruby
+require 'lightio'
+# apply monkey patch at beginning
 LightIO::Monkey.patch_all!
-# now you can just write normal ruby code
+
+require 'net/http'
+
+host = 'github.com'
+port = 443
+
 start = Time.now
+
 10.times.map do
   Thread.new do
-    `sleep 1`
+    Net::HTTP.start(host, port, use_ssl: true) do |http|
+      res = http.request_get('/ping')
+      p res.code
+    end
   end
 end.each(&:join)
-puts Time.now - start
+
+puts "#{Time.now - start} seconds"
 
 ``` 
+
+See [Examples](/examples) for detail.
 
 ### You Should Know
 
