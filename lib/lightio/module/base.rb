@@ -4,9 +4,15 @@ module LightIO::Module
       def find_library_class(klass)
         return LightIO::Library::Base.send(:nameless_classes)[klass] if klass.name.nil?
         name = klass.name
-        namespace_index = name.rindex("::")
-        class_name = namespace_index.nil? ? name : name[(namespace_index + 2)..-1]
-        LightIO::Library.const_get(class_name)
+        begin
+          LightIO::Library.const_get(name)
+        rescue NameError
+          # retry without namespace
+          namespace_index = name.rindex("::")
+          raise if namespace_index.nil?
+          class_name = name[(namespace_index + 2)..-1]
+          LightIO::Library.const_get(class_name)
+        end
       end
     end
 

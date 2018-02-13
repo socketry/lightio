@@ -20,4 +20,11 @@ RSpec.describe OpenSSL::SSL::SSLSocket, skip_library: true do
       r.close; w.close
     end
   end
+
+  describe 'inherited' do
+    it 'success' do
+      MySSLSocket = Class.new(::OpenSSL::SSL::SSLSocket)
+      expect(MySSLSocket < OpenSSL::SSL::SSLSocket)
+    end
+  end
 end
