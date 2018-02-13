@@ -51,8 +51,28 @@ module LightIO::Module
             r.close
           end
         end
-        # [r, w]
         [wrap_to_library(r), wrap_to_library(w)]
+      end
+
+      def copy_stream(*args)
+        raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 2..4)" unless (2..4).include?(args.size)
+        src, dst, copy_length, src_offset = args
+        src = src.respond_to?(:to_io) ? src.to_io : LightIO::Library::File.open(src, 'r') unless src.is_a?(IO)
+        dst = dst.respond_to?(:to_io) ? dst.to_io : LightIO::Library::File.open(dst, 'w') unless dst.is_a?(IO)
+        buf_size = 4096
+        copy_chars = 0
+        buf_size = [buf_size, copy_length].min if copy_length
+        src.seek(src_offset) if src_offset
+        while (buf = src.read(buf_size))
+          size = dst.write(buf)
+          copy_chars += size
+          if copy_length
+            copy_length -= size
+            break if copy_length.zero?
+            buf_size = [buf_size, copy_length].min
+          end
+        end
+        copy_chars
       end
 
       def select(read_fds, write_fds=nil, _except_fds=nil, timeout=nil)

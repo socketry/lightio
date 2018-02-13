@@ -183,9 +183,9 @@ RSpec.describe LightIO::Library::IO do
         w.puts "hello"
         w.puts "world"
         w.close
-        expect(r.read) == "hello\nworld\n"
-        expect(r.read) == ""
-        expect(r.read(nil)) == ""
+        expect(r.read).to eq "hello\nworld\n"
+        expect(r.read).to eq ""
+        expect(r.read(nil)).to eq ""
       end
 
       it "use outbuf" do
@@ -194,8 +194,8 @@ RSpec.describe LightIO::Library::IO do
         w.puts "world"
         w.close
         outbuf = "origin content should be remove"
-        expect(r.read(nil, outbuf)) == "hello\nworld\n"
-        expect(outbuf) == "hello\nworld\n"
+        expect(r.read(nil, outbuf)).to eq "hello\nworld\n"
+        expect(outbuf).to eq "hello\nworld\n"
       end
 
       it "blocking until read EOF" do
@@ -208,7 +208,7 @@ RSpec.describe LightIO::Library::IO do
           end
         end.to raise_error(LightIO::Timeout::Error)
         w.close
-        expect(r.read) == "hello\nworld\n"
+        expect(r.read).to eq ""
       end
 
       it 'read eof' do
@@ -226,9 +226,17 @@ RSpec.describe LightIO::Library::IO do
         w.puts "hello"
         w.puts "world"
         w.close
-        expect(r.read(5)) == "hello"
-        expect(r.read(1)) == "\n"
-        expect(r.read) == "world\n"
+        expect(r.read(5)).to eq "hello"
+        expect(r.read(1)).to eq "\n"
+        expect(r.read).to eq "world\n"
+      end
+
+      it "longer length" do
+        r, w = pipe
+        w.puts "hello"
+        w.puts "world"
+        w.close
+        expect(r.read(30)).to eq "hello\nworld\n"
       end
 
       it "use outbuf" do
@@ -237,8 +245,8 @@ RSpec.describe LightIO::Library::IO do
         w.puts "world"
         w.close
         outbuf = "origin content should be remove"
-        expect(r.read(5, outbuf)) == "hello"
-        expect(outbuf) == "hello"
+        expect(r.read(5, outbuf)).to eq "hello"
+        expect(outbuf).to eq "hello"
       end
 
       it "blocking until read length" do
@@ -251,7 +259,7 @@ RSpec.describe LightIO::Library::IO do
         end.to raise_error(LightIO::Timeout::Error)
         w.write "world"
         w.close
-        expect(r.read(10)) == "helloworld"
+        expect(r.read(10)).to eq "world"
       end
 
       it 'read eof' do
@@ -275,14 +283,14 @@ RSpec.describe LightIO::Library::IO do
       it "return immediately content" do
         r, w = pipe
         w << "hello"
-        expect(r.readpartial(4096)) == "hello"
+        expect(r.readpartial(4096)).to eq "hello"
       end
 
       it "raise EOF" do
         r, w = pipe
         w << "hello"
         w.close
-        expect(r.readpartial(4096)) == "hello"
+        expect(r.readpartial(4096)).to eq "hello"
         expect {r.readpartial(4096)}.to raise_error EOFError
       end
 
@@ -290,8 +298,8 @@ RSpec.describe LightIO::Library::IO do
         r, w = pipe
         w << "hello"
         outbuf = "origin content should be remove"
-        expect(r.readpartial(4096, outbuf)) == "hello"
-        expect(outbuf) == "hello"
+        expect(r.readpartial(4096, outbuf)).to eq "hello"
+        expect(outbuf).to eq "hello"
       end
 
       it "blocking until readable" do
@@ -303,7 +311,7 @@ RSpec.describe LightIO::Library::IO do
         end.to raise_error(LightIO::Timeout::Error)
         w << "hello world"
         w.close
-        expect(r.readpartial(4096)) == "hello world"
+        expect(r.readpartial(4096)).to eq "hello world"
       end
     end
   end
@@ -526,7 +534,7 @@ RSpec.describe LightIO::Library::IO do
   describe '#open' do
     it 'with block' do
       stdout = nil
-      IO.open(1) do |io|
+      LightIO::Library::IO.open(1) do |io|
         stdout = io
         expect(io.to_i).to be == STDOUT.to_i
       end
@@ -534,10 +542,49 @@ RSpec.describe LightIO::Library::IO do
     end
 
     it 'without block' do
-      io = IO.open(1)
+      io = LightIO::Library::IO.open(1)
       expect(io.to_i).to be == STDOUT.to_i
       expect(io.closed?).to be_falsey
       io.close
+    end
+  end
+
+  describe '#copy_stream' do
+    it 'call' do
+      r1, w1 = LightIO::Library::IO.pipe
+      r2, w2 = LightIO::Library::IO.pipe
+      w1 << 'Hello world'
+      w1.close
+      LightIO::Library::IO.copy_stream(r1, w2)
+      expect(w2.closed?).to be_falsey
+      w2.close
+      expect(r2.read).to eq 'Hello world'
+      r1.close
+      r2.close
+    end
+
+    it 'with copy_length' do
+      r1, w1 = LightIO::Library::IO.pipe
+      r2, w2 = LightIO::Library::IO.pipe
+      w1 << 'Hello world'
+      w1.close
+      LightIO::Library::IO.copy_stream(r1, w2, 5)
+      expect(w2.closed?).to be_falsey
+      w2.close
+      expect(r2.read).to eq 'Hello'
+      r1.close
+      r2.close
+    end
+
+    it 'with src_offset' do
+      r1 = LightIO::Library::File.open("./README.md")
+      r2, w2 = LightIO::Library::IO.pipe
+      LightIO::Library::IO.copy_stream(r1, w2, 7, 2)
+      expect(w2.closed?).to be_falsey
+      w2.close
+      expect(r2.read).to eq 'LightIO'
+      r1.close
+      r2.close
     end
   end
 end

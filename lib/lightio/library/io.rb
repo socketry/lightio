@@ -42,7 +42,7 @@ module LightIO::Library
               return outbuf
             end
           else
-            return length.nil? ? outbuf : nil
+            return outbuf.empty? && length ? nil : outbuf
           end
         end
       end
