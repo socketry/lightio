@@ -12,10 +12,18 @@ module LightIO::Module
         unless io.respond_to?(:to_io)
           raise TypeError, "no implicit conversion of #{io.class} into IO"
         end
-        to_io = io.to_io
+        to_io = io.is_a?(LightIO::Library::IO) ? io : io.to_io
         unless to_io.is_a?(LightIO::Library::IO)
-          raise TypeError, "can't process raw IO, use LightIO::IO._wrap(obj) to wrap it" if to_io.is_a?(::IO)
-          raise TypeError, "can't convert #{io.class} to IO (#{io.class}#to_io gives #{to_io.class})"
+          raise TypeError, "can't convert #{io.class} to IO (#{io.class}#to_io gives #{to_io.class})" unless to_io.is_a?(::IO)
+
+          # try wrap raw io instead of raise error
+          wrapped_io = to_io.instance_variable_get(:@_lightio_wrapped_io)
+          unless wrapped_io
+            wrapped_io = LightIO::Library::IO._wrap(to_io)
+            to_io.instance_variable_set(:@_lightio_wrapped_io, wrapped_io)
+          end
+          to_io = wrapped_io
+          # raise TypeError, "can't process raw IO, use LightIO::IO._wrap(obj) to wrap it"
         end
         to_io
       end

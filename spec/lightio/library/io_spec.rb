@@ -166,6 +166,14 @@ RSpec.describe LightIO::Library::IO do
         }.to raise_error(TypeError, "can't convert B_TO_IO to IO (B_TO_IO#to_io gives #{1.class})")
       end
     end
+
+    context 'with raw io', skip_monkey_patch: true do
+      it 'auto wrap raw io' do
+        r, w = IO.pipe
+        r_fds, w_fds = LightIO::Library::IO.select(nil, [w])
+        expect(w_fds).to eq [w]
+      end
+    end
   end
 
   describe "#read" do
