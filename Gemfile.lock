@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    lightio (0.4.1)
+    lightio (0.4.2)
       nio4r (~> 2.2)
 
 GEM
@@ -96,4 +96,4 @@ DEPENDENCIES
   rspec (~> 3.0)
 
 BUNDLED WITH
-   1.16.0
+   1.16.1
