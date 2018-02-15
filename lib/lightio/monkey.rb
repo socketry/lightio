@@ -10,6 +10,13 @@ module LightIO
 
     class << self
       def patch_all!
+        # Fix https://github.com/socketry/lightio/issues/7
+        begin
+          require 'ffi'
+        rescue LoadError
+          nil
+        end
+
         patch_thread!
         patch_io!
         patch_kernel!
