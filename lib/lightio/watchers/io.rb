@@ -21,7 +21,6 @@ module LightIO::Watchers
       @io = io
       @ioloop = LightIO::Core::IOloop.current
       @waiting = false
-      ObjectSpace.define_finalizer(self, self.class.finalizer(@monitor))
       @error = nil
       # maintain socket status, see https://github.com/socketry/lightio/issues/1
       @readiness = nil
@@ -30,7 +29,9 @@ module LightIO::Watchers
     # NIO::Monitor
     def monitor(interests=:rw)
       @monitor ||= begin
-        @ioloop.add_io_wait(@io, interests) {callback_on_waiting}
+        monitor = @ioloop.add_io_wait(@io, interests) {callback_on_waiting}
+        ObjectSpace.define_finalizer(self, self.class.finalizer(monitor))
+        monitor
       end
     end
 

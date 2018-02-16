@@ -12,6 +12,7 @@ module LightIO::Core
       @value = nil
       @ioloop = IOloop.current
       @state = :init
+      @light_fiber = nil
     end
 
     def done?
