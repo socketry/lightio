@@ -5,6 +5,7 @@
 [![Build Status](https://travis-ci.org/socketry/lightio.svg?branch=master)](https://travis-ci.org/socketry/lightio)
 [![Coverage Status](https://coveralls.io/repos/github/socketry/lightio/badge.svg?branch=master)](https://coveralls.io/github/socketry/lightio?branch=master)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jjyr/lightio/blob/master/LICENSE.txt)
+[![Gitter](https://badges.gitter.im/join.svg)](https://gitter.im/lightio-dev/Lobby)
 
 LightIO provide green thread to ruby. Like Golang's goroutine, or Crystal's fiber. In LightIO it called beam. 
 
