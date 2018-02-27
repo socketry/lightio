@@ -153,6 +153,7 @@ module LightIO::Library
       @obj = socket
       wait_nonblock(:connect_nonblock, remote_address)
       @obj
+      lightio_initialize
     end
 
     private
@@ -167,6 +168,7 @@ module LightIO::Library
 
     def initialize(*args)
       @obj = ::TCPServer.send(:origin_new, *args)
+      lightio_initialize
     end
 
     def accept

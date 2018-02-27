@@ -1,3 +1,5 @@
+require 'io/wait'
+
 module LightIO::Library
   class IO
     include Base
@@ -19,8 +21,16 @@ module LightIO::Library
         end
       end
 
+      def lightio_initialize
+        @readbuf = StringIO.new
+        @readbuf.set_encoding(@obj.external_encoding) if @obj.respond_to?(:external_encoding)
+        @eof = nil
+        @seek = 0
+      end
+
       def wait(timeout = nil, mode = :read)
-        io_watcher.wait(timeout, mode) && self
+        # avoid wait if can immediately return
+        (super(0, mode) || io_watcher.wait(timeout, mode)) && self
       end
 
       def wait_readable(timeout = nil)
@@ -31,30 +41,21 @@ module LightIO::Library
         wait(timeout, :write) && self
       end
 
-      def read(length=nil, outbuf=nil)
-        raise ArgumentError, "negative length #{length} given" if length && length < 0
-        (outbuf ||= "").clear
-        loop do
-          readlen = length.nil? ? 4096 : length - outbuf.size
-          if (data = wait_nonblock(:read_nonblock, readlen))
-            outbuf << data
-            if length == outbuf.size
-              return outbuf
-            end
-          else
-            return outbuf.empty? && length ? nil : outbuf
-          end
+      def read(length = nil, outbuf = nil)
+        while !fill_read_buf && (length.nil? || length > @readbuf.length - @readbuf.pos)
+          wait_readable
         end
+        @readbuf.read(length, outbuf)
       end
 
-      def readpartial(maxlen, outbuf=nil)
-        (outbuf ||= "").clear
-        if (data = wait_nonblock(:read_nonblock, maxlen))
-          outbuf << data
-        else
-          raise EOFError, 'end of file reached'
+      def readpartial(maxlen, outbuf = nil)
+        raise ArgumentError, "negative length #{maxlen} given" if maxlen < 0
+        fill_read_buf
+        while @readbuf.eof? && !io_eof?
+          wait_readable
+          fill_read_buf
         end
-        outbuf
+        @readbuf.readpartial(maxlen, outbuf)
       end
 
       def getbyte
@@ -62,8 +63,13 @@ module LightIO::Library
       end
 
       def getc
-        wait_readable
-        @obj.getc
+        fill_read_buf
+        until (c = @readbuf.getc)
+          return nil if nonblock_eof?
+          wait_readable
+          fill_read_buf
+        end
+        c
       end
 
       def readline(*args)
@@ -73,11 +79,10 @@ module LightIO::Library
       end
 
       def readlines(*args)
-        result = []
-        until eof?
-          result << readline(*args)
+        until fill_read_buf
+          wait_readable
         end
-        result
+        @readbuf.readlines(*args)
       end
 
       def readchar
@@ -93,8 +98,13 @@ module LightIO::Library
       end
 
       def eof
-        wait_readable
-        @obj.eof
+        # until eof have a value
+        fill_read_buf
+        while @readbuf.eof? && @eof.nil?
+          wait_readable
+          fill_read_buf
+        end
+        nonblock_eof?
       end
 
       alias eof? eof
@@ -103,19 +113,17 @@ module LightIO::Library
         raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 0..2)" if args.size > 2
         sep = $/
         if args[0].is_a?(Numeric)
-          limit = args.shift
+          limit = args[0]
         else
-          sep = args.shift if args.size > 0
-          limit = args.shift if args.first.is_a?(Numeric)
+          sep = args[0] if args.size > 0
+          limit = args[1] if args[1].is_a?(Numeric)
         end
-        s = ''
-        while (c = getbyte)
-          s << c
-          break if limit && s.size == limit
-          break if c == sep
+        until fill_read_buf
+          break if limit && limit <= @readbuf.length
+          break if sep && @readbuf.string.index(sep)
+          wait_readable
         end
-        s = nil if s.empty?
-        $_ = s
+        @readbuf.gets(*args)
       end
 
       def print(*obj)
@@ -140,6 +148,64 @@ module LightIO::Library
         io_watcher.close
         @obj.close
       end
+
+      private
+
+      def nonblock_eof?
+        @readbuf.eof? && io_eof?
+      end
+
+      def io_eof?
+        @eof
+      end
+
+      BUF_CHUNK_SIZE = 1024 * 16
+
+      def fill_read_buf
+        return true if @eof
+        while (data = @obj.read_nonblock(BUF_CHUNK_SIZE, exception: false))
+          case data
+            when :wait_readable, :wait_writable
+              # set eof to unknown(nil)
+              @eof = nil
+              return nil
+            else
+              # set eof to false
+              @eof = false if @eof.nil?
+              @readbuf.string << data
+          end
+        end
+        # set eof to true
+        @eof = true
+      end
+    end
+
+    def set_encoding(*args)
+      @readbuf.set_encoding(*args)
+      super(*args)
+    end
+
+    def lineno
+      @readbuf.lineno
+    end
+
+    def lineno= no
+      @readbuf.lineno = no
+    end
+
+    def rewind
+      # clear buf if seek offset is not zero
+      unless @seek.zero?
+        @seek = 0
+        @readbuf.string.clear
+      end
+      @readbuf.rewind
+    end
+
+    def seek(*args)
+      @readbuf.string.clear
+      @seek = args[0]
+      @obj.seek(*args)
     end
 
     prepend IOMethods

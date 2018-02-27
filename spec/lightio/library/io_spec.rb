@@ -216,7 +216,7 @@ RSpec.describe LightIO::Library::IO do
           end
         end.to raise_error(LightIO::Timeout::Error)
         w.close
-        expect(r.read).to eq ""
+        expect(r.read).to eq "hello\nworld\n"
       end
 
       it 'read eof' do
@@ -267,7 +267,7 @@ RSpec.describe LightIO::Library::IO do
         end.to raise_error(LightIO::Timeout::Error)
         w.write "world"
         w.close
-        expect(r.read(10)).to eq "world"
+        expect(r.read(10)).to eq "helloworld"
       end
 
       it 'read eof' do

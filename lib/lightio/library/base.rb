@@ -98,6 +98,7 @@ module LightIO::Library
         else
           mock_obj = allocate
           mock_obj.instance_variable_set(:@obj, obj)
+          mock_obj.__send__(:call_lightio_initialize)
           mock_obj
         end
       end
@@ -106,9 +107,15 @@ module LightIO::Library
     def initialize(*args)
       obj = self.class.send(:call_method_from_ancestors, :mock_klass).send(:origin_new, *args)
       @obj = obj
+      call_lightio_initialize
+      @obj
     end
 
     private
+    def call_lightio_initialize
+      __send__(:lightio_initialize) if respond_to?(:lightio_initialize, true)
+    end
+
     def light_io_raw_obj
       @obj
     end

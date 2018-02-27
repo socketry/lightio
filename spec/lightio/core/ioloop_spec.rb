@@ -27,10 +27,7 @@ RSpec.describe LightIO::IOloop do
       t = Thread.new {
         LightIO::IOloop.current.stop
         r, w = LightIO::IO.pipe
-        w.puts "hello"
-        w.wait_writable
-        w.close
-        r.read
+        r.wait_readable
       }
       expect {t.value}.to raise_error(IOError, 'selector is closed')
     end
