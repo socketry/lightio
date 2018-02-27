@@ -30,7 +30,16 @@ module LightIO::Library
 
       def wait(timeout = nil, mode = :read)
         # avoid wait if can immediately return
-        (super(0, mode) || io_watcher.wait(timeout, mode)) && self
+        wait_result = if RUBY_VERSION < '2.4'
+                        if mode == :read
+                          @obj.wait_readable(0)
+                        elsif mode == :write
+                          @obj.wait_writable(0)
+                        end
+                      else
+                        @obj.wait(0, mode)
+                      end
+        (wait_result || io_watcher.wait(timeout, mode)) && self
       end
 
       def wait_readable(timeout = nil)
