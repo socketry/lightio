@@ -28,6 +28,7 @@ RSpec.describe LightIO::IOloop do
         LightIO::IOloop.current.stop
         r, w = LightIO::IO.pipe
         w.puts "hello"
+        w.wait_writable
         w.close
         r.read
       }

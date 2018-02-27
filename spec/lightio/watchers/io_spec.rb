@@ -7,7 +7,7 @@ RSpec.describe LightIO::Watchers::IO, skip_monkey_patch: true do
       r, w = pipe
       io_watcher = LightIO::Watchers::IO.new(r, :r)
       io_watcher.close
-      expect {io_watcher.wait_readable}.to raise_error(EOFError)
+      expect {io_watcher.wait_readable}.to raise_error(IOError)
     end
 
     it 'can not cross threads' do

@@ -24,11 +24,13 @@ module LightIO::Watchers
       @error = nil
       # maintain socket status, see https://github.com/socketry/lightio/issues/1
       @readiness = nil
+      @monitor = nil
     end
 
     # NIO::Monitor
     def monitor(interests=:rw)
       @monitor ||= begin
+        raise @error if @error
         monitor = @ioloop.add_io_wait(@io, interests) {callback_on_waiting}
         ObjectSpace.define_finalizer(self, self.class.finalizer(monitor))
         monitor
@@ -42,7 +44,13 @@ module LightIO::Watchers
     end
 
     extend Forwardable
-    def_delegators :monitor, :interests, :interests=, :closed?
+    def_delegators :monitor, :interests, :interests=
+
+    def closed?
+      # check @monitor exists, avoid unnecessary monitor created
+      return true unless @monitor
+      monitor.closed?
+    end
 
     # this method return previous IO.select status
     # should avoid to directly use
@@ -91,9 +99,9 @@ module LightIO::Watchers
     end
 
     def close
+      set_close_error
       return if closed?
       monitor.close
-      @error = IOError.new('closed stream')
       callback_on_waiting
     end
 
@@ -108,6 +116,10 @@ module LightIO::Watchers
     end
 
     private
+    def set_close_error
+      @error ||= IOError.new('closed stream')
+    end
+
     def check_monitor(mode)
       case mode
         when :read
