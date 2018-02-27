@@ -152,6 +152,11 @@ module LightIO::Library
         end
       end
 
+      def flush
+        @obj.flush
+        self
+      end
+
       def close(*args)
         # close watcher before io closed
         io_watcher.close
@@ -215,6 +220,11 @@ module LightIO::Library
       @readbuf.string.clear
       @seek = args[0]
       @obj.seek(*args)
+    end
+
+    def binmode
+      @obj.binmode
+      self
     end
 
     prepend IOMethods
