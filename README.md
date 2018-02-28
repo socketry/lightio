@@ -7,7 +7,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jjyr/lightio/blob/master/LICENSE.txt)
 [![Gitter](https://badges.gitter.im/join.svg)](https://gitter.im/lightio-dev/Lobby)
 
-LightIO provide green thread to ruby. Like Golang's goroutine, or Crystal's fiber. In LightIO it called beam. 
+LightIO provide green thread to ruby. Like Golang's goroutine, or Crystal's fiber. In LightIO it is called beam.
 
 Example:
 
@@ -31,7 +31,7 @@ puts "1000 beams take #{seconds - 1} seconds to create"
 ```
 
 
-LightIO ship ruby stdlib compatible library under `LightIO` or `LightIO::Library` namespace, 
+LightIO ship ruby stdlib compatible library under `LightIO` or `LightIO::Library` namespace,
 these libraries provide ability to schedule LightIO beams when IO operations occur.
 
 
@@ -62,7 +62,7 @@ end.each(&:join)
 
 puts "#{Time.now - start} seconds"
 
-``` 
+```
 
 See [Examples](/examples) for detail.
 
@@ -71,7 +71,7 @@ See [Examples](/examples) for detail.
 In fact ruby core team already plan to implement `Thread::Green` in core language, see https://bugs.ruby-lang.org/issues/13618
 
 It mean if ruby implemented `Thread::Green`, this library is no meaning to exists.
-But as a crazy userland implemented green thread library, it bring lot's of fun to me, so I will continue to maintain it, and welcome to use  
+But as a crazy userland implemented green thread library, it bring lot's of fun to me, so I will continue to maintain it, and welcome to use
 
 
 See [Wiki](https://github.com/jjyr/lightio/wiki) and [Roadmap](https://github.com/jjyr/lightio/wiki/Current-status-and-roadmap) to get more information.
