@@ -14,13 +14,6 @@ module LightIO::Library
 
     # abstract for io-like operations
     module IOMethods
-      class << self
-        def included(base)
-          base.send(:wrap_blocking_methods, :read, :write)
-          base.send(:alias_method, :<<, :write)
-        end
-      end
-
       def lightio_initialize
         @readbuf = StringIO.new
         @readbuf.set_encoding(@obj.external_encoding) if @obj.respond_to?(:external_encoding)
@@ -49,6 +42,26 @@ module LightIO::Library
       def wait_writable(timeout = nil)
         wait(timeout, :write) && self
       end
+
+      def write(string)
+        s = StringIO.new(string.to_s)
+        remain_size = s.size
+        loop do
+          result = write_nonblock(s.read, exception: false)
+          case result
+            when :wait_writable
+              io_watcher.wait_writable
+            else
+              remain_size -= result
+              unless remain_size.zero?
+                s.seek(result)
+              end
+              return result
+          end
+        end
+      end
+
+      alias << write
 
       def read(length = nil, outbuf = nil)
         while !fill_read_buf && (length.nil? || length > @readbuf.length - @readbuf.pos)
